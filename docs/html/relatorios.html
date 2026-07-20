@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gerador de Relatórios - Sistema Pastoral</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .material-symbols-outlined {
+                font-family: 'Material Symbols Outlined';
+                font-weight: normal;
+                font-style: normal;
+                font-size: 24px;
+                line-height: 1;
+                letter-spacing: normal;
+                text-transform: none;
+                display: inline-block;
+                white-space: nowrap;
+                word-wrap: normal;
+                direction: ltr;
+                -webkit-font-feature-settings: 'liga';
+                -webkit-font-smoothing: antialiased;
+            }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#75796b",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#394d14",
+                        "on-surface": "#1a1c1a",
+                        "primary": "#3e5219",
+                        "on-background": "#1a1c1a",
+                        "surface-bright": "#faf9f6",
+                        "surface-container-low": "#f4f3f1",
+                        "on-primary-container": "#d0eba1",
+                        "tertiary-fixed": "#ffdea5",
+                        "secondary-fixed-dim": "#dfc29f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "inverse-on-surface": "#f2f1ee",
+                        "secondary-container": "#f9dbb7",
+                        "secondary-fixed": "#fcdeba",
+                        "inverse-primary": "#b6d088",
+                        "tertiary": "#634705",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#755f42",
+                        "surface-container-high": "#e9e8e5",
+                        "primary-fixed": "#d2eca2",
+                        "primary-container": "#556b2f",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffdc9f",
+                        "surface": "#faf9f6",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary-container": "#7d5f1e",
+                        "surface-container": "#efeeeb",
+                        "background": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715b3e",
+                        "primary-fixed-dim": "#b6d088",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#131f00",
+                        "surface-tint": "#50652a",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "on-surface-variant": "#45483c",
+                        "inverse-surface": "#2f312f",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-container-highest": "#e3e2e0",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#281903",
+                        "outline-variant": "#c5c8b8",
+                        "on-secondary-fixed-variant": "#574329"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "24px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "sidebar-collapsed": "80px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen font-body-md flex antialiased">
+<!-- SideNavBar -->
+<aside class="bg-surface fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-low shadow-sm flex flex-col py-6 px-4 z-20 hidden md:flex">
+<div class="flex items-center gap-4 mb-10 px-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">church</span>
+</div>
+<div>
+<h1 class="font-display-lg text-[24px] leading-tight text-primary">Pastoral</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Filantropia Inteligente</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-body-md text-body-md">Home</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">person_add</span>
+<span class="font-body-md text-body-md">Cadastro</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md text-body-md">Financeiro</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span class="font-body-md text-body-md">Atendimentos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-primary font-bold border-r-4 border-primary scale-95 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bar_chart</span>
+<span class="font-body-md text-body-md">Relatórios</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Usuários</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Configurações</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-sidebar-width flex flex-col min-h-screen">
+<!-- TopNavBar -->
+<header class="bg-surface docked full-width top-0 bg-surface-bright shadow-sm flex justify-between items-center h-16 px-margin-desktop sticky z-10 w-full">
+<div class="flex items-center gap-4">
+<div class="md:hidden">
+<button class="text-on-surface-variant p-2">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</div>
+<div class="hidden md:flex items-center text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors" href="#">Home</a>
+<span class="material-symbols-outlined mx-2 text-[16px]">chevron_right</span>
+<span class="text-primary font-bold border-b-2 border-primary pb-1 opacity-80 transition-opacity">Relatórios</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border-none rounded-full text-body-sm font-body-sm focus:ring-1 focus:ring-secondary focus:outline-none w-64" placeholder="Buscar..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" data-alt="A professional headshot of a smiling woman with dark hair pulled back, wearing a neat blouse. The lighting is soft and flattering, set against a neutral studio background. The mood is approachable and competent, fitting a corporate or institutional profile picture. The color palette features warm skin tones and understated clothing colors." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2yRZm0HlLmkhM-Il2qH9m1PqgIOy9DNHyuUoF5QObZEWTYuneUIPxRn3APs5xTyM2s5-IaAdc5tCqURj3dyXIO1ko_a3b170WdUzYUKC647fv1zgPpVTN3-Y8SNG1Td2WEicvihikxx9W8gN49hWDnZiRc05rXGiRASWQF4yQ5c8oYTsnDdc2KP1Wi7WLcQke5vtk5EzSCLHy_keQLCEBzphyzyMcJbgD_yReanM1MisQ2bJdXdy3sZD1zPyvDuU3HuX3_dfIWX8"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-4 md:p-8 flex-1 max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="mb-8">
+<h2 class="font-headline-lg text-headline-lg text-primary md:hidden mb-2">Relatórios</h2>
+<h2 class="font-headline-lg text-headline-lg text-primary hidden md:block mb-2">Gerador de Relatórios</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Configure os parâmetros abaixo para gerar, visualizar ou exportar dados consolidados do sistema.</p>
+</div>
+<!-- Report Configuration Card -->
+<div class="bg-surface rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-surface-variant p-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<!-- Report Type Selection -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface block">Tipo de Relatório</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-low border border-outline-variant rounded-lg px-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-tertiary focus:border-tertiary">
+<option value="beneficiarios">Beneficiários</option>
+<option value="financeiro">Financeiro</option>
+<option value="atendimentos">Atendimentos</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Date Picker: Start -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface block">Data Inicial</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-tertiary focus:border-tertiary" type="date"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">calendar_today</span>
+</div>
+</div>
+<!-- Date Picker: End -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface block">Data Final</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-lg pl-10 pr-4 py-2.5 font-body-md text-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-tertiary focus:border-tertiary" type="date"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">event</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row gap-4 justify-end border-t border-surface-variant pt-6">
+<button class="px-6 py-2.5 rounded-lg border border-secondary text-secondary font-label-md text-label-md hover:bg-secondary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                        Exportar PDF
+                    </button>
+<button class="px-6 py-2.5 rounded-lg border border-secondary text-secondary font-label-md text-label-md hover:bg-secondary-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">table_view</span>
+                        Exportar Excel
+                    </button>
+<button class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+                        Visualizar
+                    </button>
+</div>
+</div>
+<!-- Report Preview Section -->
+<div class="bg-surface rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-surface-variant overflow-hidden">
+<div class="px-6 py-4 border-b border-surface-variant bg-surface-bright flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Preview do Relatório: Beneficiários</h3>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-2 py-1 rounded-md">Exibindo 5 de 142 registros</span>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-surface-variant bg-surface-container-low">
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">ID</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Nome</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Data de Cadastro</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Status</th>
+<th class="py-3 px-6 font-label-md text-label-md text-on-surface-variant whitespace-nowrap">Último Atendimento</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface divide-y divide-surface-variant">
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6">#1042</td>
+<td class="py-4 px-6 font-medium">Maria da Silva Costa</td>
+<td class="py-4 px-6 text-on-surface-variant">12/03/2023</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed">Ativo</span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">15/10/2023</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6">#1043</td>
+<td class="py-4 px-6 font-medium">João Pedro Oliveira</td>
+<td class="py-4 px-6 text-on-surface-variant">14/03/2023</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed">Ativo</span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">02/11/2023</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6">#1044</td>
+<td class="py-4 px-6 font-medium">Ana Clara Santos</td>
+<td class="py-4 px-6 text-on-surface-variant">20/03/2023</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-variant text-on-surface-variant">Inativo</span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">10/08/2023</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6">#1045</td>
+<td class="py-4 px-6 font-medium">Carlos Eduardo Mendes</td>
+<td class="py-4 px-6 text-on-surface-variant">05/04/2023</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed">Pendente</span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">-</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6">#1046</td>
+<td class="py-4 px-6 font-medium">Beatriz Lima</td>
+<td class="py-4 px-6 text-on-surface-variant">10/04/2023</td>
+<td class="py-4 px-6">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-primary-fixed text-on-primary-fixed">Ativo</span>
+</td>
+<td class="py-4 px-6 text-on-surface-variant">05/11/2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</body></html>

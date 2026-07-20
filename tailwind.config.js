@@ -1,0 +1,75 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        "primary": "#3e5219",
+        "primary-container": "#556b2f",
+        "on-primary": "#ffffff",
+        "on-primary-container": "#d0eba1",
+        "secondary": "#715b3e",
+        "secondary-container": "#f9dbb7",
+        "on-secondary": "#ffffff",
+        "on-secondary-container": "#755f42",
+        "tertiary": "#634705",
+        "tertiary-container": "#7d5f1e",
+        "on-tertiary": "#ffffff",
+        "on-tertiary-container": "#ffdc9f",
+        "background": "#faf9f6",
+        "on-background": "#1a1c1a",
+        "surface": "#faf9f6",
+        "surface-bright": "#faf9f6",
+        "surface-dim": "#dbdad7",
+        "surface-container-lowest": "#ffffff",
+        "surface-container-low": "#f4f3f1",
+        "surface-container": "#efeeeb",
+        "surface-container-high": "#e9e8e5",
+        "surface-container-highest": "#e3e2e0",
+        "on-surface": "#1a1c1a",
+        "on-surface-variant": "#45483c",
+        "outline": "#75796b",
+        "outline-variant": "#c5c8b8",
+        "error": "#ba1a1a",
+        "on-error": "#ffffff",
+        "error-container": "#ffdad6",
+        "on-error-container": "#93000a",
+      },
+      borderRadius: {
+        "DEFAULT": "0.25rem",
+        "md": "8px",
+        "lg": "12px",
+        "xl": "16px",
+        "2xl": "20px",
+        "full": "9999px"
+      },
+      spacing: {
+        "container-max": "1440px",
+        "margin-mobile": "16px",
+        "gutter": "24px",
+        "sidebar-width": "280px",
+        "stack-lg": "24px",
+        "stack-md": "16px",
+        "stack-sm": "8px",
+        "sidebar-collapsed": "80px",
+        "margin-desktop": "32px"
+      },
+      fontFamily: {
+        "display-lg": ["Nunito", "sans-serif"],
+        "label-md": ["Nunito", "sans-serif"],
+        "headline-md": ["Nunito", "sans-serif"],
+        "headline-lg": ["Nunito", "sans-serif"],
+        "body-md": ["Nunito", "sans-serif"],
+        "display-lg-mobile": ["Nunito", "sans-serif"],
+        "label-sm": ["Nunito", "sans-serif"],
+        "body-sm": ["Nunito", "sans-serif"],
+        "body-lg": ["Nunito", "sans-serif"],
+        "comfortaa": ["Comfortaa", "sans-serif"]
+      }
+    },
+  },
+  plugins: [],
+}

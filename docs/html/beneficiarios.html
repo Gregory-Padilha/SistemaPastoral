@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sistema Pastoral - Listagem de Beneficiários</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#75796b",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#394d14",
+                        "on-surface": "#1a1c1a",
+                        "primary": "#3e5219",
+                        "on-background": "#1a1c1a",
+                        "surface-bright": "#faf9f6",
+                        "surface-container-low": "#f4f3f1",
+                        "on-primary-container": "#d0eba1",
+                        "tertiary-fixed": "#ffdea5",
+                        "secondary-fixed-dim": "#dfc29f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "inverse-on-surface": "#f2f1ee",
+                        "secondary-container": "#f9dbb7",
+                        "secondary-fixed": "#fcdeba",
+                        "inverse-primary": "#b6d088",
+                        "tertiary": "#634705",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#755f42",
+                        "surface-container-high": "#e9e8e5",
+                        "primary-fixed": "#d2eca2",
+                        "primary-container": "#556b2f",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffdc9f",
+                        "surface": "#faf9f6",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary-container": "#7d5f1e",
+                        "surface-container": "#efeeeb",
+                        "background": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715b3e",
+                        "primary-fixed-dim": "#b6d088",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#131f00",
+                        "surface-tint": "#50652a",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "on-surface-variant": "#45483c",
+                        "inverse-surface": "#2f312f",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-container-highest": "#e3e2e0",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#281903",
+                        "outline-variant": "#c5c8b8",
+                        "on-secondary-fixed-variant": "#574329"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "24px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "sidebar-collapsed": "80px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md flex h-screen overflow-hidden antialiased">
+<!-- JSON Component: SideNavBar -->
+<aside class="bg-surface fixed left-0 top-0 h-full w-sidebar-width flex flex-col py-6 px-4 shadow-sm z-30 border-r border-surface-variant">
+<!-- Header / Brand -->
+<div class="mb-8 px-4 flex flex-col">
+<h1 class="font-display-lg text-display-lg text-primary">Pastoral</h1>
+<span class="font-label-sm text-label-sm text-secondary tracking-widest uppercase mt-1">Filantropia Inteligente</span>
+</div>
+<!-- Navigation Tabs -->
+<nav class="flex-col space-y-2 flex-1 overflow-y-auto">
+<!-- Home -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<!-- Cadastro (ACTIVE based on Semantic Mapping) -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-surface-container-low transition-transform duration-150 relative" href="#">
+<span class="material-symbols-outlined text-[20px] icon-fill" data-icon="person_add">person_add</span>
+<span class="font-label-md text-label-md">Cadastro</span>
+</a>
+<!-- Financeiro -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Financeiro</span>
+</a>
+<!-- Atendimentos -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="volunteer_activism">volunteer_activism</span>
+<span class="font-label-md text-label-md">Atendimentos</span>
+</a>
+<!-- Relatórios -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="bar_chart">bar_chart</span>
+<span class="font-label-md text-label-md">Relatórios</span>
+</a>
+<!-- Usuários -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Usuários</span>
+</a>
+<!-- Configurações -->
+<a class="flex items-center gap-4 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Configurações</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col ml-sidebar-width w-[calc(100%-spacing.sidebar-width)] h-full relative">
+<!-- JSON Component: TopNavBar -->
+<header class="bg-surface docked full-width top-0 shadow-sm flex justify-between items-center h-16 px-margin-desktop z-20 sticky border-b border-surface-variant/50">
+<!-- Search Bar (on_left as per JSON) -->
+<div class="flex items-center bg-surface-container-low rounded-full px-4 py-2 w-96 border border-transparent focus-within:border-outline focus-within:bg-surface transition-all">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none outline-none w-full text-body-sm font-body-sm text-on-surface placeholder:text-outline-variant focus:ring-0 p-0" placeholder="Buscar no sistema..." type="text"/>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-6">
+<!-- Trailing Icons -->
+<button aria-label="Notificações" class="text-on-surface-variant hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button aria-label="Sair" class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+</button>
+<!-- Profile -->
+<div class="flex items-center gap-3 pl-4 border-l border-surface-variant cursor-pointer">
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-label-md text-label-md">
+                        US
+                    </div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 overflow-y-auto p-margin-desktop bg-background pb-20">
+<div class="max-w-container-max mx-auto w-full space-y-stack-lg">
+<!-- Breadcrumb -->
+<nav class="flex items-center text-body-sm font-body-sm text-on-surface-variant space-x-2">
+<a class="hover:text-primary transition-colors" href="#">Cadastro</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-on-surface font-medium">Listagem</span>
+</nav>
+<!-- Header Section -->
+<div class="flex justify-between items-end border-b border-surface-variant pb-6">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-primary">Listagem de Beneficiários</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Gerencie os cadastros e acompanhe os status das famílias atendidas.</p>
+</div>
+<button class="bg-primary text-on-primary hover:bg-primary-container px-6 py-3 rounded-lg flex items-center gap-2 font-label-md text-label-md transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">add</span>
+                        Novo Cadastro
+                    </button>
+</div>
+<!-- Filters & Search Bar (Content specific) -->
+<section class="bg-surface rounded-xl shadow-sm border border-outline-variant p-6 flex flex-col md:flex-row gap-4">
+<!-- Advanced Search Input -->
+<div class="flex-1 relative">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Busca Geral</label>
+<div class="flex items-center border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-lowest focus-within:border-secondary transition-colors">
+<span class="material-symbols-outlined text-outline mr-2 text-[20px]">search</span>
+<input class="bg-transparent border-none outline-none w-full text-body-md font-body-md text-on-surface placeholder:text-outline-variant focus:ring-0 p-0" placeholder="Nome, CPF ou Bairro..." type="text"/>
+</div>
+</div>
+<!-- Filter: Status -->
+<div class="w-full md:w-48">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Status</label>
+<select class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-secondary focus:ring-0 outline-none transition-colors appearance-none">
+<option value="">Todos</option>
+<option value="ativo">Ativo</option>
+<option value="inativo">Inativo</option>
+<option value="pendente">Pendente</option>
+</select>
+</div>
+<!-- Filter: Tipo de Benefício -->
+<div class="w-full md:w-56">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Tipo de Benefício</label>
+<select class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-secondary focus:ring-0 outline-none transition-colors appearance-none">
+<option value="">Todos</option>
+<option value="cesta">Cesta Básica</option>
+<option value="auxilio">Auxílio Financeiro</option>
+<option value="saude">Apoio Saúde</option>
+</select>
+</div>
+<!-- Filter: Data -->
+<div class="w-full md:w-48">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Data de Cadastro</label>
+<input class="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface-container-lowest text-body-md font-body-md text-on-surface focus:border-secondary focus:ring-0 outline-none transition-colors" type="date"/>
+</div>
+</section>
+<!-- Data Table -->
+<section class="bg-surface rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-surface-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="px-6 py-4 font-medium">Nome Completo</th>
+<th class="px-6 py-4 font-medium">CPF</th>
+<th class="px-6 py-4 font-medium">Telefone</th>
+<th class="px-6 py-4 font-medium">Benefício Principal</th>
+<th class="px-6 py-4 font-medium">Data Cadastro</th>
+<th class="px-6 py-4 font-medium">Status</th>
+<th class="px-6 py-4 font-medium text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant text-body-sm font-body-sm text-on-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-secondary-container/20 transition-colors group">
+<td class="px-6 py-4 font-medium text-primary">Maria Silva Santos</td>
+<td class="px-6 py-4 text-on-surface-variant">123.456.789-00</td>
+<td class="px-6 py-4 text-on-surface-variant">(11) 98765-4321</td>
+<td class="px-6 py-4">Cesta Básica</td>
+<td class="px-6 py-4 text-on-surface-variant">10/10/2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-primary-fixed text-on-primary-fixed-variant border border-primary/20">
+                                            Ativo
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-primary rounded hover:bg-surface-container transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1.5 text-outline hover:text-tertiary-container rounded hover:bg-surface-container transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error-container/50 transition-colors" title="Inativar">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-secondary-container/20 transition-colors group">
+<td class="px-6 py-4 font-medium text-primary">João Pedro Oliveira</td>
+<td class="px-6 py-4 text-on-surface-variant">987.654.321-11</td>
+<td class="px-6 py-4 text-on-surface-variant">(11) 91234-5678</td>
+<td class="px-6 py-4">Auxílio Financeiro</td>
+<td class="px-6 py-4 text-on-surface-variant">05/09/2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-tertiary-fixed text-on-tertiary-fixed-variant border border-tertiary/20">
+                                            Pendente
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-primary rounded hover:bg-surface-container transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1.5 text-outline hover:text-tertiary-container rounded hover:bg-surface-container transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-error rounded hover:bg-error-container/50 transition-colors" title="Inativar">
+<span class="material-symbols-outlined text-[18px]">block</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-secondary-container/20 transition-colors group">
+<td class="px-6 py-4 font-medium text-primary">Ana Lúcia Costa</td>
+<td class="px-6 py-4 text-on-surface-variant">456.123.789-22</td>
+<td class="px-6 py-4 text-on-surface-variant">(11) 99887-7665</td>
+<td class="px-6 py-4">Apoio Saúde</td>
+<td class="px-6 py-4 text-on-surface-variant">20/08/2023</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-surface-variant text-on-surface-variant border border-outline-variant">
+                                            Inativo
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1.5 text-outline hover:text-primary rounded hover:bg-surface-container transition-colors" title="Ver">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+<button class="p-1.5 text-outline hover:text-tertiary-container rounded hover:bg-surface-container transition-colors" title="Editar">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1.5 text-outline hover:text-primary rounded hover:bg-primary-container/30 transition-colors" title="Reativar">
+<span class="material-symbols-outlined text-[18px]">restore</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="bg-surface-bright px-6 py-4 border-t border-surface-variant flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+                            Mostrando <span class="font-medium text-on-surface">1</span> a <span class="font-medium text-on-surface">3</span> de <span class="font-medium text-on-surface">45</span> resultados
+                        </span>
+<div class="flex items-center gap-2">
+<button class="p-2 border border-outline-variant rounded-md text-outline hover:bg-surface-container disabled:opacity-50 transition-colors" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md bg-primary text-on-primary font-label-sm text-label-sm">
+                                1
+                            </button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md border border-outline-variant text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors">
+                                2
+                            </button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md border border-outline-variant text-on-surface hover:bg-surface-container font-label-sm text-label-sm transition-colors">
+                                3
+                            </button>
+<span class="text-on-surface-variant">...</span>
+<button class="p-2 border border-outline-variant rounded-md text-outline hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>
