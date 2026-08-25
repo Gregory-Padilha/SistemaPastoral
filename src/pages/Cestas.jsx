@@ -88,7 +88,13 @@ export const Cestas = () => {
     }
     window.addEventListener('focus', handleFocus)
 
-    // 3. Fallback live polling
+    // 3. Listen to global 5-minute silent auto-refresh event
+    const handleSilentRefresh = () => {
+      loadData(true)
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+
+    // 4. Fallback live polling
     const interval = setInterval(() => {
       loadData(true)
     }, 3000)
@@ -96,6 +102,7 @@ export const Cestas = () => {
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
       clearInterval(interval)
     }
   }, [search, statusFilter, currentYear])

@@ -58,15 +58,15 @@ export const Financeiro = () => {
     }
   }
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const data = await fetchFinanceiroMensal('todos', currentMonth, currentYear)
       setLancamentos(data)
     } catch (err) {
-      showToast('Falha ao buscar lançamentos', err.message, 'error')
+      if (!silent) showToast('Falha ao buscar lançamentos', err.message, 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -75,8 +75,22 @@ export const Financeiro = () => {
   }, [])
 
   useEffect(() => {
-    loadData()
+    loadData(false)
   }, [currentMonth, currentYear])
+
+  useEffect(() => {
+    const handleSilentRefresh = () => {
+      if (!drawerOpen) {
+        loadData(true)
+      }
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+    window.addEventListener('focus', handleSilentRefresh)
+    return () => {
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
+      window.removeEventListener('focus', handleSilentRefresh)
+    }
+  }, [drawerOpen, currentMonth, currentYear])
 
   // Aggregate stats
   const totalEntradas = lancamentos

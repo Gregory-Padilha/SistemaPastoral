@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { searchGlobalEntities } from '../lib/queries'
@@ -14,6 +14,66 @@ export const Layout = ({ children }) => {
   const [searchResults, setSearchResults] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
   const [loadingSearch, setLoadingSearch] = useState(false)
+
+  // 5-Minute Inactivity Auto-Sync States
+  const lastActivityRef = useRef(Date.now())
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [lastSyncTime, setLastSyncTime] = useState(
+    new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  )
+  const [showSyncBadge, setShowSyncBadge] = useState(false)
+
+  const triggerSilentSync = (reason = 'auto') => {
+    // Safety check: Avoid syncing if the user is typing in a form or an input dialog is open
+    const activeEl = document.activeElement
+    const isTyping = activeEl && (
+      activeEl.tagName === 'INPUT' || 
+      activeEl.tagName === 'TEXTAREA' || 
+      activeEl.isContentEditable
+    )
+    const hasOpenModal = document.querySelector('[role="dialog"]') || document.querySelector('.fixed.inset-0.z-50')
+
+    if (reason === 'auto' && (isTyping || hasOpenModal)) {
+      // Postpone for 1 minute so the user isn't interrupted while typing
+      lastActivityRef.current = Date.now() - (4 * 60 * 1000)
+      return
+    }
+
+    setIsSyncing(true)
+    window.dispatchEvent(new CustomEvent('app:silent-refresh', { detail: { timestamp: Date.now(), reason } }))
+
+    setTimeout(() => {
+      setIsSyncing(false)
+      const nowTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      setLastSyncTime(nowTime)
+      setShowSyncBadge(true)
+      setTimeout(() => setShowSyncBadge(false), 3500)
+    }, 800)
+
+    lastActivityRef.current = Date.now()
+  }
+
+  useEffect(() => {
+    const handleUserActivity = () => {
+      lastActivityRef.current = Date.now()
+    }
+
+    const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll', 'click']
+    events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }))
+
+    // Check every 15 seconds if 5 minutes (300,000 ms) of inactivity have elapsed
+    const idleCheckInterval = setInterval(() => {
+      const idleTime = Date.now() - lastActivityRef.current
+      if (idleTime >= 5 * 60 * 1000) {
+        triggerSilentSync('auto')
+      }
+    }, 15000)
+
+    return () => {
+      events.forEach(ev => window.removeEventListener(ev, handleUserActivity))
+      clearInterval(idleCheckInterval)
+    }
+  }, [])
 
   const navigation = [
     { name: 'Dashboard', href: '/', icon: 'grid_view' },
@@ -270,7 +330,30 @@ export const Layout = ({ children }) => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            {/* Auto-Sync Feedback Badge */}
+            {showSyncBadge && (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 rounded-xl text-[11px] font-bold animate-in fade-in duration-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping"></span>
+                <span>Dados atualizados</span>
+              </div>
+            )}
+
+            {/* Silent Auto-Sync Button / Indicator */}
+            <button
+              type="button"
+              onClick={() => triggerSilentSync('manual')}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-low hover:bg-surface-container border border-outline-variant/60 hover:border-primary/40 text-on-surface-variant hover:text-primary rounded-xl text-xs font-semibold transition-all group active:scale-95 shadow-2xs"
+              title={`Sincronização automática ativa (atualiza silenciosamente após 5min sem uso).\nÚltima atualização: ${lastSyncTime}.\nClique para sincronizar agora.`}
+            >
+              <span className={`material-symbols-outlined text-[17px] text-primary transition-transform ${isSyncing ? 'animate-spin' : 'group-hover:rotate-180 duration-500'}`}>
+                sync
+              </span>
+              <span className="text-[11px] font-semibold text-on-surface-variant group-hover:text-primary">
+                {isSyncing ? 'Atualizando...' : `Ao vivo (${lastSyncTime})`}
+              </span>
+            </button>
+
             <span className="text-xs font-semibold text-on-surface-variant bg-surface-container-low border border-outline-variant/60 px-3 py-1.5 rounded-xl">
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
             </span>

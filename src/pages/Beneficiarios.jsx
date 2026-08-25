@@ -97,8 +97,8 @@ export const Beneficiarios = () => {
   const [photoRemoved, setPhotoRemoved] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const loadBeneficiarios = async () => {
-    setLoading(true)
+  const loadBeneficiarios = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const statusParam = statusFilter === 'incompletos' ? 'todos' : statusFilter
       const data = await fetchBeneficiarios(search, statusParam)
@@ -108,18 +108,32 @@ export const Beneficiarios = () => {
         setBeneficiarios(data)
       }
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      loadBeneficiarios()
+      loadBeneficiarios(false)
     }, 300)
     return () => clearTimeout(delayDebounce)
   }, [search, statusFilter])
+
+  useEffect(() => {
+    const handleSilentRefresh = () => {
+      if (!modalOpen && !deleteConfirmOpen) {
+        loadBeneficiarios(true)
+      }
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+    window.addEventListener('focus', handleSilentRefresh)
+    return () => {
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
+      window.removeEventListener('focus', handleSilentRefresh)
+    }
+  }, [modalOpen, deleteConfirmOpen, search, statusFilter])
 
   const openNewModal = () => {
     setEditingBeneficiario(null)

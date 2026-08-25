@@ -58,8 +58,8 @@ export const Aluguel = () => {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ]
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const [contractsData, paymentsData, stockData] = await Promise.all([
         fetchAlugueis(search).catch(() => []),
@@ -77,18 +77,32 @@ export const Aluguel = () => {
         : (stockData || [])
       setEstoque(filteredStock)
     } catch (err) {
-      showToast('Erro ao carregar dados', err.message, 'error')
+      if (!silent) showToast('Erro ao carregar dados', err.message, 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      loadData()
+      loadData(false)
     }, 300)
     return () => clearTimeout(delayDebounce)
   }, [search, activeTab, currentYear])
+
+  useEffect(() => {
+    const handleSilentRefresh = () => {
+      if (!monthModal.isOpen && !showAddEqModal) {
+        loadData(true)
+      }
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+    window.addEventListener('focus', handleSilentRefresh)
+    return () => {
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
+      window.removeEventListener('focus', handleSilentRefresh)
+    }
+  }, [monthModal.isOpen, showAddEqModal, search, activeTab, currentYear])
 
   const handleAddEquipmentSubmit = async (e) => {
     e.preventDefault()

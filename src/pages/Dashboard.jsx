@@ -181,7 +181,13 @@ export const Dashboard = () => {
     }
     window.addEventListener('focus', handleFocus)
 
-    // 3. Fallback fast poll every 3 seconds to guarantee instant real-time sync
+    // 3. Listen to global 5-minute silent auto-refresh event
+    const handleSilentRefresh = () => {
+      loadDashboard(true)
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+
+    // 4. Fallback fast poll every 3 seconds to guarantee instant real-time sync
     const pollInterval = setInterval(() => {
       loadDashboard(true)
     }, 3000)
@@ -189,6 +195,7 @@ export const Dashboard = () => {
     return () => {
       supabase.removeChannel(channel)
       window.removeEventListener('focus', handleFocus)
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
       clearInterval(pollInterval)
     }
   }, [])

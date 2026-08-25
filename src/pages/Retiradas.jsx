@@ -41,8 +41,8 @@ export const Retiradas = () => {
   const [newItemNome, setNewItemNome] = useState('')
   const [newItemUnidade, setNewItemUnidade] = useState('UN')
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
       const [anotacoesData, itensData] = await Promise.all([
         fetchAnotacoesRetirada(),
@@ -69,15 +69,29 @@ export const Retiradas = () => {
       if (bError) throw bError
       setBeneficiarios(benefs || [])
     } catch (err) {
-      showToast('Erro ao carregar dados', err.message, 'error')
+      if (!silent) showToast('Erro ao carregar dados', err.message, 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadData()
+    loadData(false)
   }, [])
+
+  useEffect(() => {
+    const handleSilentRefresh = () => {
+      if (!editingAnotacao && !itemModalOpen) {
+        loadData(true)
+      }
+    }
+    window.addEventListener('app:silent-refresh', handleSilentRefresh)
+    window.addEventListener('focus', handleSilentRefresh)
+    return () => {
+      window.removeEventListener('app:silent-refresh', handleSilentRefresh)
+      window.removeEventListener('focus', handleSilentRefresh)
+    }
+  }, [editingAnotacao, itemModalOpen])
 
   const handleQtyChange = (itemId, change) => {
     setQuantidades(prev => {
