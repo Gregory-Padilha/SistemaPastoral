@@ -282,17 +282,16 @@ export const insertAtendimento = async (atendimentoData) => {
 
 export const fetchDashboardData = async () => {
   const now = new Date()
+  const currentMonthNum = now.getMonth() + 1
+  const currentYear = now.getFullYear()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
 
   let ativosCestas = 0
   try {
     const { count, error } = await supabase
-      .from('beneficiarios')
+      .from('beneficiarios_cestas')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'Ativo')
-      .not('responsavel_nome', 'is', null)
-      .is('deletado_em', null)
     if (error) throw error
     ativosCestas = count || 0
   } catch (err) {
@@ -324,32 +323,7 @@ export const fetchDashboardData = async () => {
     console.warn('Dashboard query error (countStandard):', err.message)
   }
 
-  let countCestasTotal = 0
-  try {
-    const { count, error } = await supabase
-      .from('beneficiarios')
-      .select('*', { count: 'exact', head: true })
-      .not('responsavel_nome', 'is', null)
-      .is('deletado_em', null)
-    if (error) throw error
-    countCestasTotal = count || 0
-  } catch (err) {
-    console.warn('Dashboard query error (countCestasTotal):', err.message)
-  }
-
-  let countAlugueisTotal = 0
-  try {
-    const { count, error } = await supabase
-      .from('alugueis')
-      .select('*', { count: 'exact', head: true })
-      .is('deletado_em', null)
-    if (error) throw error
-    countAlugueisTotal = count || 0
-  } catch (err) {
-    console.warn('Dashboard query error (countAlugueisTotal):', err.message)
-  }
-
-  const totalCadastrosGerais = (countStandard || 0) + (countCestasTotal || 0) + (countAlugueisTotal || 0)
+  const totalCadastrosGerais = (countStandard || 0)
 
   let totalEntradasMes = 0
   let totalSaidasMes = 0
@@ -440,13 +414,11 @@ export const fetchDashboardData = async () => {
 
   let entregasCestasMes = 0
   try {
-    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-    const currentMonthRef = `${months[now.getMonth()]} ${now.getFullYear()}`
     const { count, error } = await supabase
-      .from('cestas_entregas')
+      .from('historico_entregas_cestas')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'Entregue')
-      .eq('mes_referencia', currentMonthRef)
+      .eq('mes_referencia', currentMonthNum)
+      .eq('ano_referencia', currentYear)
     if (error) throw error
     entregasCestasMes = count || 0
   } catch (err) {

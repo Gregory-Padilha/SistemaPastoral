@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchDashboardData, insertMensagemLog } from '../lib/queries'
+import { fetchDashboardData, insertMensagemLog, insertHistoricoEntregaCesta } from '../lib/queries'
 import { supabase } from '../lib/supabase'
 import { useFeedback } from '../contexts/FeedbackContext'
 import { useAuth } from '../contexts/AuthContext'
@@ -19,116 +19,162 @@ export const Dashboard = () => {
   const [config, setConfig] = useState(null)
   const [cestasVinculadasCount, setCestasVinculadasCount] = useState(0)
 
-  useEffect(() => {
-    const loadDashboard = async () => {
+  const loadDashboard = async () => {
+    try {
+      const result = await fetchDashboardData()
+      setData(result)
+
+      const now = new Date()
+      const currentMonthNum = now.getMonth() + 1
+      const currentYear = now.getFullYear()
+
+      // Fetch active rentals for expiring alert
+      let rData = null
       try {
-        const result = await fetchDashboardData()
-        setData(result)
-
-        // Fetch count of linked basket beneficiaries in real-time
-        try {
-          const { count, error: countErr } = await supabase
-            .from('beneficiarios_cestas')
-            .select('*', { count: 'exact', head: true })
-          if (countErr) throw countErr
-          setCestasVinculadasCount(count || 0)
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (beneficiarios_cestas):', e.message)
-        }
-
-        // Load secondary data for productivity cards
-        const now = new Date()
-        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
-        const currentMonthRef = `${months[now.getMonth()]} ${now.getFullYear()}`
-
-        let rData = null
-        try {
-          const { data, error } = await supabase.from('alugueis').select('*').eq('status', 'Ativo').is('deletado_em', null)
-          if (error) throw error
-          rData = data
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (alugueis):', e.message)
-        }
-
-        let cData = null
-        try {
-          const { data, error } = await supabase.from('beneficiarios').select('*').eq('status', 'Ativo').not('responsavel_nome', 'is', null).is('deletado_em', null)
-          if (error) throw error
-          cData = data
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (beneficiarios):', e.message)
-        }
-
-        let dData = null
-        try {
-          const { data, error } = await supabase.from('cestas_entregas').select('*').eq('mes_referencia', currentMonthRef)
-          if (error) throw error
-          dData = data
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (cestas_entregas):', e.message)
-        }
-
-        let tData = null
-        try {
-          const { data, error } = await supabase.from('modelos_mensagem').select('*').eq('ativo', true).is('deletado_em', null)
-          if (error) throw error
-          tData = data
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (modelos_mensagem):', e.message)
-        }
-
-        let confData = null
-        try {
-          const { data, error } = await supabase.from('configuracoes').select('*').limit(1)
-          if (error) throw error
-          confData = data
-        } catch (e) {
-          console.warn('Dashboard secondary query warning (configuracoes):', e.message)
-        }
-
-        if (rData) {
-          // calculate rentals expiring in next 7 days
-          const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-          const expiring = rData.map(r => {
-            if (!r.dia_vencimento) return null
-            let due = new Date(now.getFullYear(), now.getMonth(), r.dia_vencimento)
-            if (due < today) {
-              due = new Date(now.getFullYear(), now.getMonth() + 1, r.dia_vencimento)
-            }
-            const diffTime = due.getTime() - today.getTime()
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-            return {
-              ...r,
-              dataVencimento: due.toLocaleDateString('pt-BR'),
-              diasFaltando: diffDays
-            }
-          }).filter(r => r !== null && r.diasFaltando >= 0 && r.diasFaltando <= 7)
-          .sort((a, b) => a.diasFaltando - b.diasFaltando)
-
-          setRentalsExpiring(expiring)
-        }
-
-        if (cData) {
-          const deliveredIds = new Set((dData || []).map(d => d.cesta_beneficiario_id))
-          const delivered = cData.filter(c => deliveredIds.has(c.id)).length
-          const total = cData.length
-          const pendingList = cData.filter(c => !deliveredIds.has(c.id))
-
-          setBasketProgress({ delivered, total, pendingList })
-        }
-
-        if (tData) setTemplates(tData)
-        if (confData && confData.length > 0) setConfig(confData[0])
-
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
+        const { data, error } = await supabase
+          .from('alugueis')
+          .select('*')
+          .eq('status', 'Ativo')
+          .is('deletado_em', null)
+        if (error) throw error
+        rData = data
+      } catch (e) {
+        console.warn('Dashboard secondary query warning (alugueis):', e.message)
       }
-    }
 
+      // Fetch linked basket beneficiaries in real-time
+      let vinculados = []
+      try {
+        const { data, error } = await supabase
+          .from('beneficiarios_cestas')
+          .select(`
+            id,
+            beneficiario_id,
+            beneficiario:beneficiarios (
+              id,
+              nome,
+              telefone,
+              whatsapp,
+              bairro,
+              cidade,
+              status
+            )
+          `)
+        if (error) throw error
+        vinculados = data || []
+        setCestasVinculadasCount(vinculados.length)
+      } catch (e) {
+        console.warn('Dashboard secondary query warning (beneficiarios_cestas):', e.message)
+      }
+
+      // Fetch deliveries for current month in real-time
+      let entregasMes = []
+      try {
+        const { data, error } = await supabase
+          .from('historico_entregas_cestas')
+          .select('beneficiario_id')
+          .eq('mes_referencia', currentMonthNum)
+          .eq('ano_referencia', currentYear)
+        if (error) throw error
+        entregasMes = data || []
+      } catch (e) {
+        console.warn('Dashboard secondary query warning (historico_entregas_cestas):', e.message)
+      }
+
+      // Message templates
+      let tData = null
+      try {
+        const { data, error } = await supabase
+          .from('modelos_mensagem')
+          .select('*')
+          .eq('ativo', true)
+          .is('deletado_em', null)
+        if (error) throw error
+        tData = data
+      } catch (e) {
+        console.warn('Dashboard secondary query warning (modelos_mensagem):', e.message)
+      }
+
+      // Configuracoes
+      let confData = null
+      try {
+        const { data, error } = await supabase
+          .from('configuracoes')
+          .select('*')
+          .limit(1)
+        if (error) throw error
+        confData = data
+      } catch (e) {
+        console.warn('Dashboard secondary query warning (configuracoes):', e.message)
+      }
+
+      // Process rentals expiring in next 7 days
+      if (rData) {
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const expiring = rData.map(r => {
+          if (!r.dia_vencimento) return null
+          let due = new Date(now.getFullYear(), now.getMonth(), r.dia_vencimento)
+          if (due < today) {
+            due = new Date(now.getFullYear(), now.getMonth() + 1, r.dia_vencimento)
+          }
+          const diffTime = due.getTime() - today.getTime()
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          return {
+            ...r,
+            dataVencimento: due.toLocaleDateString('pt-BR'),
+            diasFaltando: diffDays
+          }
+        }).filter(r => r !== null && r.diasFaltando >= 0 && r.diasFaltando <= 7)
+        .sort((a, b) => a.diasFaltando - b.diasFaltando)
+
+        setRentalsExpiring(expiring)
+      }
+
+      // Process basket deliveries & pending list
+      const deliveredBenefIds = new Set(entregasMes.map(e => e.beneficiario_id))
+      const delivered = vinculados.filter(v => deliveredBenefIds.has(v.beneficiario_id)).length
+      const total = vinculados.length
+      const pendingList = vinculados
+        .filter(v => !deliveredBenefIds.has(v.beneficiario_id))
+        .map(v => v.beneficiario)
+        .filter(Boolean)
+
+      setBasketProgress({ delivered, total, pendingList })
+
+      if (tData) setTemplates(tData)
+      if (confData && confData.length > 0) setConfig(confData[0])
+
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
     loadDashboard()
   }, [])
+
+  const handleQuickDeliverCesta = async (beneficiario) => {
+    const now = new Date()
+    const currentMonthNum = now.getMonth() + 1
+    const currentYear = now.getFullYear()
+    const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    const mesNome = months[now.getMonth()]
+
+    try {
+      await insertHistoricoEntregaCesta(
+        beneficiario.id,
+        currentMonthNum,
+        currentYear,
+        'Entrega rápida confirmada diretamente pelo Dashboard'
+      )
+      showToast('Sucesso', `Cesta de ${mesNome} confirmada para ${beneficiario.nome}!`)
+      loadDashboard()
+    } catch (err) {
+      showToast('Erro ao confirmar entrega', err.message, 'error')
+    }
+  }
 
   const handleDashboardWhatsAppClick = async (templateTitle, recipient, type) => {
     try {
@@ -268,11 +314,11 @@ export const Dashboard = () => {
     1000
   )
 
-  const totalCestas = ativosCestas || 0
-  const entreguesCestas = entregasCestasMes || 0
+  const totalCestas = basketProgress.total || ativosCestas || 0
+  const entreguesCestas = basketProgress.delivered
+  const pendentesCestas = Math.max(0, totalCestas - entreguesCestas)
   const pctEntregues = totalCestas > 0 ? Math.round((entreguesCestas / totalCestas) * 100) : 0
   const pctPendentes = 100 - pctEntregues
-  const pendentesCestas = Math.max(0, totalCestas - entreguesCestas)
 
   const userName = user?.profile?.nome?.split(' ')[0] || user?.email?.split('@')[0] || 'Irmão(ã)'
 
@@ -324,8 +370,8 @@ export const Dashboard = () => {
         </div>
       </div>
 
-      {/* KPI Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4">
+      {/* Row 1: KPI Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
         
         {/* Card 1: Saldo do Mês (4 cols) */}
         <div className="lg:col-span-4 rounded-2xl bg-gradient-to-br from-primary to-primary-container text-on-primary p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
@@ -351,8 +397,8 @@ export const Dashboard = () => {
           </div>
           <div>
             <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider block mb-0.5">Cestas Vinculadas</span>
-            <p className="text-xl font-extrabold text-on-surface">{cestasVinculadasCount}</p>
-            <p className="text-[10px] text-outline font-medium mt-0.5">Famílias cadastradas</p>
+            <p className="text-xl font-extrabold text-on-surface">{totalCestas}</p>
+            <p className="text-[10px] text-outline font-medium mt-0.5">Famílias no programa</p>
           </div>
         </div>
 
@@ -462,14 +508,14 @@ export const Dashboard = () => {
               <span className="material-symbols-outlined text-primary text-[20px]">donut_large</span>
               <h3 className="font-bold text-primary text-base">Entregas de Cesta</h3>
             </div>
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-              Este Mês
+            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+              {new Date().toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })}
             </span>
           </div>
 
           <div className="relative w-36 h-36 my-auto flex items-center justify-center">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#e8e2d7" strokeDasharray={`${pctPendentes} ${pctEntregues}`} strokeDashoffset={-pctEntregues} strokeWidth="5.5"></circle>
+              <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#e8e2d7" strokeDasharray="100 0" strokeWidth="5.5"></circle>
               <circle cx="18" cy="18" fill="transparent" r="15.915" stroke="#3e5219" strokeDasharray={`${pctEntregues} ${100 - pctEntregues}`} strokeDashoffset="0" strokeWidth="5.5" strokeLinecap="round"></circle>
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -483,9 +529,9 @@ export const Dashboard = () => {
               <span className="block text-[10px] font-bold text-primary uppercase">Entregues</span>
               <span className="text-base font-extrabold text-primary">{entreguesCestas}</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-secondary/5 border border-secondary/15 text-center">
-              <span className="block text-[10px] font-bold text-secondary uppercase">Pendentes</span>
-              <span className="text-base font-extrabold text-secondary">{pendentesCestas}</span>
+            <div className="p-2.5 rounded-xl bg-amber-500/5 border border-amber-500/20 text-center">
+              <span className="block text-[10px] font-bold text-amber-800 uppercase">Pendentes</span>
+              <span className="text-base font-extrabold text-amber-700">{pendentesCestas}</span>
             </div>
           </div>
         </div>
@@ -566,9 +612,14 @@ export const Dashboard = () => {
                 <span className="material-symbols-outlined text-[20px]">local_shipping</span>
                 Cestas Pendentes de Retirada
               </h3>
-              <Link to="/cestas" className="text-[11px] font-bold text-primary hover:underline">
-                Gerenciar Todas
-              </Link>
+              <div className="flex items-center gap-2">
+                <span className="bg-amber-100 text-amber-900 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-300">
+                  {basketProgress.pendingList.length} pendentes
+                </span>
+                <Link to="/cestas" className="text-[11px] font-bold text-primary hover:underline">
+                  Gerenciar Todas
+                </Link>
+              </div>
             </div>
 
             <div className="p-4">
@@ -578,31 +629,47 @@ export const Dashboard = () => {
                     <span className="material-symbols-outlined text-[24px]">done_all</span>
                   </div>
                   <p className="text-xs font-bold text-emerald-800">100% das cestas entregues!</p>
-                  <p className="text-[11px] text-outline">Todas as famílias vinculadas já receberam neste mês.</p>
+                  <p className="text-[11px] text-outline">Todas as {totalCestas} famílias vinculadas já receberam neste mês.</p>
                 </div>
               ) : (
                 <div className="divide-y divide-surface-variant/70 max-h-64 overflow-y-auto pr-1">
-                  {basketProgress.pendingList.slice(0, 5).map(c => {
+                  {basketProgress.pendingList.map(c => {
                     const hasWhatsApp = c.whatsapp || c.telefone
                     return (
                       <div key={c.id} className="py-2.5 flex justify-between items-center hover:bg-surface-container rounded-xl px-2 transition-colors">
                         <div className="min-w-0 pr-2">
-                          <p className="font-bold text-xs text-on-surface truncate">{c.nome}</p>
-                          <p className="text-[10px] text-outline">{c.telefone || 'Sem telefone'}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-xs text-on-surface truncate">{c.nome}</p>
+                            {c.bairro && (
+                              <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-surface-container-high rounded text-on-surface-variant">
+                                {c.bairro}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-outline mt-0.5">{c.telefone || 'Sem telefone'}</p>
                         </div>
-                        <div>
-                          {hasWhatsApp ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* Quick Deliver Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleQuickDeliverCesta(c)}
+                            className="px-2.5 py-1 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-bold text-[11px] flex items-center gap-1 shadow-2xs transition-all active:scale-95"
+                            title="Confirmar entrega de cesta deste mês"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">check</span>
+                            Entregar
+                          </button>
+
+                          {/* WhatsApp Reminder Button */}
+                          {hasWhatsApp && (
                             <button
                               type="button"
                               onClick={() => handleDashboardWhatsAppClick('Confirmação', c, 'beneficiario')}
-                              className="px-2.5 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary font-bold text-[11px] flex items-center gap-1 transition-colors"
-                              title="Enviar lembrete de retirada"
+                              className="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold transition-colors"
+                              title="Enviar lembrete via WhatsApp"
                             >
-                              <span className="material-symbols-outlined text-[14px]">chat</span>
-                              Lembrar
+                              <span className="material-symbols-outlined text-[16px]">chat</span>
                             </button>
-                          ) : (
-                            <span className="text-[10px] text-outline">Sem tel.</span>
                           )}
                         </div>
                       </div>
