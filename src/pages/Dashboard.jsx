@@ -19,7 +19,8 @@ export const Dashboard = () => {
   const [config, setConfig] = useState(null)
   const [cestasVinculadasCount, setCestasVinculadasCount] = useState(0)
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (silent = false) => {
+    if (!silent && !data) setLoading(true)
     try {
       const result = await fetchDashboardData()
       setData(result)
@@ -145,14 +146,51 @@ export const Dashboard = () => {
       if (confData && confData.length > 0) setConfig(confData[0])
 
     } catch (err) {
-      setError(err.message)
+      if (!silent) setError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadDashboard()
+    loadDashboard(false)
+
+    // 1. Live Supabase Realtime Channels
+    const channel = supabase
+      .channel('dashboard-realtime-live-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'historico_entregas_cestas' }, () => {
+        loadDashboard(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beneficiarios_cestas' }, () => {
+        loadDashboard(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beneficiarios' }, () => {
+        loadDashboard(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alugueis' }, () => {
+        loadDashboard(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'financeiro' }, () => {
+        loadDashboard(true)
+      })
+      .subscribe()
+
+    // 2. Realtime sync when switching tabs/focusing browser
+    const handleFocus = () => {
+      loadDashboard(true)
+    }
+    window.addEventListener('focus', handleFocus)
+
+    // 3. Fallback fast poll every 3 seconds to guarantee instant real-time sync
+    const pollInterval = setInterval(() => {
+      loadDashboard(true)
+    }, 3000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', handleFocus)
+      clearInterval(pollInterval)
+    }
   }, [])
 
   const handleQuickDeliverCesta = async (beneficiario) => {

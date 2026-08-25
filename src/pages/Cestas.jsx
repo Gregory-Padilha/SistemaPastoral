@@ -7,6 +7,7 @@ import {
   insertHistoricoEntregaCesta,
   deleteHistoricoEntregaCesta
 } from '../lib/queries'
+import { supabase } from '../lib/supabase'
 import { useFeedback } from '../contexts/FeedbackContext'
 
 export const Cestas = () => {
@@ -43,8 +44,8 @@ export const Cestas = () => {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ]
 
-  const loadData = async () => {
-    setLoading(true)
+  const loadData = async (silent = false) => {
+    if (!silent && beneficiariosCestas.length === 0) setLoading(true)
     try {
       const [listData, historyData] = await Promise.all([
         fetchBeneficiariosCestas(search, statusFilter),
@@ -53,17 +54,50 @@ export const Cestas = () => {
       setBeneficiariosCestas(listData)
       setHistoricoEntregas(historyData)
     } catch (err) {
-      showToast('Erro ao carregar dados', err.message, 'error')
+      if (!silent) showToast('Erro ao carregar dados', err.message, 'error')
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
-      loadData()
+      loadData(false)
     }, 300)
     return () => clearTimeout(delayDebounce)
+  }, [search, statusFilter, currentYear])
+
+  useEffect(() => {
+    // 1. Live Supabase Realtime Channels
+    const channel = supabase
+      .channel('cestas-realtime-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'historico_entregas_cestas' }, () => {
+        loadData(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beneficiarios_cestas' }, () => {
+        loadData(true)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'beneficiarios' }, () => {
+        loadData(true)
+      })
+      .subscribe()
+
+    // 2. Realtime sync on tab focus
+    const handleFocus = () => {
+      loadData(true)
+    }
+    window.addEventListener('focus', handleFocus)
+
+    // 3. Fallback live polling
+    const interval = setInterval(() => {
+      loadData(true)
+    }, 3000)
+
+    return () => {
+      supabase.removeChannel(channel)
+      window.removeEventListener('focus', handleFocus)
+      clearInterval(interval)
+    }
   }, [search, statusFilter, currentYear])
 
   const handleUnenroll = (item) => {
