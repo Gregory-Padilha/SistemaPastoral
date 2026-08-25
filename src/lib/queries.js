@@ -589,7 +589,7 @@ export const deleteLancamento = async (id) => {
     // 1. Fetch the record to check if it's related to an aluguel contract
     const { data: record } = await supabase
       .from('financeiro')
-      .select('id, contrato_id, mes_referencia, descricao')
+      .select('id, contrato_id, mes_referencia, data, descricao')
       .eq('id', id)
       .single()
 
@@ -600,22 +600,34 @@ export const deleteLancamento = async (id) => {
       .eq('id', id)
     if (error) throw error
 
-    // 3. If it is linked to an aluguel contract, cascade delete the rental and restore equipment stock!
+    // 3. If it is linked to an aluguel contract, revert ONLY that month's payment status to 'Não Pago' (red)
+    // and DO NOT delete the rental contract itself!
     if (record && record.contrato_id) {
-      // Soft-delete aluguel record and restore stock
       try {
-        await deleteAluguel(record.contrato_id)
-      } catch (cErr) {
-        console.error('Error cascading delete to aluguel contract:', cErr)
-      }
+        let mesNum = null
+        let anoNum = null
 
-      // Delete payment history for that contract
-      try {
-        await supabase
-          .from('historico_pagamentos_aluguel')
-          .delete()
-          .eq('contrato_id', record.contrato_id)
-      } catch (_) {}
+        if (record.mes_referencia && record.mes_referencia.includes('/')) {
+          const parts = record.mes_referencia.split('/')
+          mesNum = parseInt(parts[0])
+          anoNum = parseInt(parts[1])
+        } else if (record.data) {
+          const d = new Date(record.data)
+          mesNum = d.getMonth() + 1
+          anoNum = d.getFullYear()
+        }
+
+        if (mesNum && anoNum) {
+          await supabase
+            .from('historico_pagamentos_aluguel')
+            .delete()
+            .eq('contrato_id', record.contrato_id)
+            .eq('mes_referencia', mesNum)
+            .eq('ano_referencia', anoNum)
+        }
+      } catch (cErr) {
+        console.error('Error removing payment reference from historico_pagamentos_aluguel:', cErr)
+      }
     }
   } catch (err) {
     console.error('Error deleting financeiro:', err)
@@ -805,25 +817,8 @@ export const insertAluguel = async (aluguelData) => {
       throw insertError
     }
 
-    // Automatically register the rent in the financeiro ledger (caderno de fechamento)
-    const financeiroRecord = {
-      tipo: 'entrada',
-      data: data.data_inicio || new Date().toISOString().split('T')[0],
-      descricao: `Aluguel de ${data.imovel_endereco || 'Equipamentos'} - ${data.locatario_nome || 'Locatário'}`,
-      categoria: 'Aluguel',
-      valor: data.valor_aluguel || 0,
-      forma_pagamento: data.forma_pagamento || 'PIX',
-      contrato_id: data.id,
-      observacoes: `Registro automático da criação do contrato de aluguel de ${data.imovel_endereco || 'Equipamentos'} para ${data.locatario_nome || 'Locatário'}.`
-    }
-
-    const { error: finError } = await supabase
-      .from('financeiro')
-      .insert([financeiroRecord])
-    
-    if (finError) {
-      console.error('Error auto-inserting rent to financeiro:', finError)
-    }
+    // Note: Creating a rental does NOT insert into financeiro automatically.
+    // Financial entries are only generated when monthly payments are marked as 'Pago'.
 
     // Decrement stock for all items in the rental if status is 'Ativo'
     if (data.status === 'Ativo' && itens.length > 0) {
@@ -1008,11 +1003,32 @@ export const deleteAluguel = async (id) => {
       }
     }
 
+    // 2. Soft delete the aluguel record
     const { error } = await supabase
       .from('alugueis')
       .update({ deletado_em: new Date().toISOString() })
       .eq('id', id)
     if (error) throw error
+
+    // 3. Automatically remove/soft-delete all related entries in the financeiro ledger (Caderno de Fechamento)
+    try {
+      await supabase
+        .from('financeiro')
+        .update({ deletado_em: new Date().toISOString() })
+        .eq('contrato_id', id)
+    } catch (fErr) {
+      console.warn('Error soft-deleting financeiro entries for aluguel:', fErr.message)
+    }
+
+    // 4. Clean up payment history for this contract
+    try {
+      await supabase
+        .from('historico_pagamentos_aluguel')
+        .delete()
+        .eq('contrato_id', id)
+    } catch (hErr) {
+      console.warn('Error deleting payment history for aluguel:', hErr.message)
+    }
   } catch (err) {
     console.error('Error deleting aluguel:', err)
     throw new Error('Erro ao excluir contrato: ' + err.message)

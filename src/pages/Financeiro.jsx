@@ -228,7 +228,7 @@ export const Financeiro = () => {
   const handleDelete = (item) => {
     const isAluguelLinked = !!item.contrato_id
     const confirmMessage = isAluguelLinked
-      ? `Este lançamento está vinculado a uma Ficha de Empréstimo/Aluguel ("${item.descricao}"). Ao excluí-lo aqui no Caderno de Fechamento, o registro na Ficha de Aluguel também será excluído e o estoque de equipamentos será restaurado automaticamente. Deseja confirmar?`
+      ? `Este lançamento está vinculado ao pagamento de uma Ficha de Empréstimo/Aluguel ("${item.descricao}"). Ao excluí-lo aqui no Caderno de Fechamento, o mês correspondente na Ficha de Aluguel voltará a ficar Não Pago (em vermelho), sem apagar a ficha do locatário. Deseja confirmar?`
       : `Tem certeza que deseja excluir o lançamento "${item.descricao}" no valor de ${formatCurrency(item.valor)}? Esta ação não poderá ser desfeita.`
 
     confirmDelete(
@@ -240,7 +240,7 @@ export const Financeiro = () => {
           showToast(
             'Sucesso', 
             isAluguelLinked 
-              ? 'Lançamento e Ficha de Aluguel vinculada excluídos com sucesso!' 
+              ? 'Lançamento excluído e status do mês na Ficha de Aluguel retornado para Não Pago!' 
               : 'Lançamento excluído com sucesso!'
           )
           loadData()

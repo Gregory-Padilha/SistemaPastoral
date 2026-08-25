@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   fetchAlugueis, 
+  deleteAluguel,
   fetchEstoqueEquipamentos, 
   insertEquipamento,
   fetchHistoricoPagamentosAluguel,
@@ -349,6 +350,22 @@ export const Aluguel = () => {
     if (!dateStr) return '---'
     const date = new Date(dateStr)
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+  }
+
+  const handleDeleteContract = (contract) => {
+    confirmDelete(
+      'Excluir Ficha de Empréstimo',
+      `Tem certeza que deseja excluir a ficha de empréstimo de "${contract.locatario_nome}"? Os equipamentos voltarão ao estoque e todos os lançamentos vinculados no Caderno de Fechamento serão excluídos automaticamente.`,
+      async () => {
+        try {
+          await deleteAluguel(contract.id)
+          showToast('Sucesso', `Ficha de ${contract.locatario_nome} excluída com sucesso!`)
+          loadData()
+        } catch (err) {
+          showToast('Erro ao excluir', err.message, 'error')
+        }
+      }
+    )
   }
 
   const filteredContracts = contracts.filter(c => {
@@ -699,7 +716,7 @@ export const Aluguel = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end">
+                          <div className="flex justify-end items-center gap-1.5">
                             <Link 
                               to={`/aluguel/${c.id}`} 
                               className="p-1.5 text-outline hover:text-primary rounded-xl hover:bg-surface-container transition-colors inline-flex items-center"
@@ -707,6 +724,14 @@ export const Aluguel = () => {
                             >
                               <span className="material-symbols-outlined text-[20px]">edit</span>
                             </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteContract(c)}
+                              className="p-1.5 text-outline hover:text-error rounded-xl hover:bg-error-container/20 transition-colors inline-flex items-center"
+                              title="Excluir Ficha de Empréstimo"
+                            >
+                              <span className="material-symbols-outlined text-[20px]">delete</span>
+                            </button>
                           </div>
                         </td>
                       </tr>
