@@ -92,7 +92,7 @@ export const Aluguel = () => {
 
   useEffect(() => {
     const handleSilentRefresh = () => {
-      if (!monthModal.isOpen && !showAddEqModal) {
+      if (!payModal?.isOpen && !newEqModalOpen) {
         loadData(true)
       }
     }
@@ -102,7 +102,7 @@ export const Aluguel = () => {
       window.removeEventListener('app:silent-refresh', handleSilentRefresh)
       window.removeEventListener('focus', handleSilentRefresh)
     }
-  }, [monthModal.isOpen, showAddEqModal, search, activeTab, currentYear])
+  }, [payModal?.isOpen, newEqModalOpen, search, activeTab, currentYear])
 
   const handleAddEquipmentSubmit = async (e) => {
     e.preventDefault()

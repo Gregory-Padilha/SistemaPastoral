@@ -81,7 +81,7 @@ export const Retiradas = () => {
 
   useEffect(() => {
     const handleSilentRefresh = () => {
-      if (!editingAnotacao && !itemModalOpen) {
+      if (!editingAnotacao && !newAnotacaoOpen && !manageItensOpen) {
         loadData(true)
       }
     }
@@ -91,7 +91,7 @@ export const Retiradas = () => {
       window.removeEventListener('app:silent-refresh', handleSilentRefresh)
       window.removeEventListener('focus', handleSilentRefresh)
     }
-  }, [editingAnotacao, itemModalOpen])
+  }, [editingAnotacao, newAnotacaoOpen, manageItensOpen])
 
   const handleQtyChange = (itemId, change) => {
     setQuantidades(prev => {
