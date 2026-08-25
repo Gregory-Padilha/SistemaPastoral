@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Cadastro - Sistema Pastoral</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "outline": "#75796b",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#394d14",
+                        "on-surface": "#1a1c1a",
+                        "primary": "#3e5219",
+                        "on-background": "#1a1c1a",
+                        "surface-bright": "#faf9f6",
+                        "surface-container-low": "#f4f3f1",
+                        "on-primary-container": "#d0eba1",
+                        "tertiary-fixed": "#ffdea5",
+                        "secondary-fixed-dim": "#dfc29f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "inverse-on-surface": "#f2f1ee",
+                        "secondary-container": "#f9dbb7",
+                        "secondary-fixed": "#fcdeba",
+                        "inverse-primary": "#b6d088",
+                        "tertiary": "#634705",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#755f42",
+                        "surface-container-high": "#e9e8e5",
+                        "primary-fixed": "#d2eca2",
+                        "primary-container": "#556b2f",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffdc9f",
+                        "surface": "#faf9f6",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary-container": "#7d5f1e",
+                        "surface-container": "#efeeeb",
+                        "background": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715b3e",
+                        "primary-fixed-dim": "#b6d088",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#131f00",
+                        "surface-tint": "#50652a",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "on-surface-variant": "#45483c",
+                        "inverse-surface": "#2f312f",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-container-highest": "#e3e2e0",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#281903",
+                        "outline-variant": "#c5c8b8",
+                        "on-secondary-fixed-variant": "#574329"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    spacing: {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "24px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "sidebar-collapsed": "80px",
+                        "margin-desktop": "32px"
+                    },
+                    fontFamily: {
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    fontSize: {
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "label-md": ["14px", { lineHeight: "20px", letterSpacing: "0.05em", fontWeight: "600" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", fontWeight: "600" }],
+                        "body-md": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "display-lg-mobile": ["32px", { lineHeight: "40px", fontWeight: "700" }],
+                        "label-sm": ["12px", { lineHeight: "16px", fontWeight: "500" }],
+                        "body-sm": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "body-lg": ["18px", { lineHeight: "28px", fontWeight: "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased min-h-screen flex">
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-0 h-full w-sidebar-width bg-surface dark:bg-surface-dim shadow-sm z-20 flex flex-col h-screen py-6 px-4 border-r border-surface-variant">
+<div class="mb-10 px-4">
+<h1 class="font-display-lg text-display-lg text-primary dark:text-primary-fixed-dim">Pastoral</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Filantropia Inteligente</p>
+</div>
+<nav class="flex-1 space-y-2">
+<!-- Home (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="home">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<!-- Cadastro (Active) -->
+<a class="flex items-center px-4 py-3 rounded-lg bg-surface-container-low text-primary dark:text-inverse-primary font-bold border-r-4 border-primary hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="person_add" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person_add</span>
+<span class="font-label-md text-label-md">Cadastro</span>
+</a>
+<!-- Financeiro (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Financeiro</span>
+</a>
+<!-- Atendimentos (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="volunteer_activism">volunteer_activism</span>
+<span class="font-label-md text-label-md">Atendimentos</span>
+</a>
+<!-- Relatórios (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="bar_chart">bar_chart</span>
+<span class="font-label-md text-label-md">Relatórios</span>
+</a>
+<!-- Usuários (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="group">group</span>
+<span class="font-label-md text-label-md">Usuários</span>
+</a>
+<!-- Configurações (Inactive) -->
+<a class="flex items-center px-4 py-3 rounded-lg hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors text-on-surface-variant dark:text-on-surface-variant font-medium mt-auto" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="settings">settings</span>
+<span class="font-label-md text-label-md">Configurações</span>
+</a>
+</nav>
+</aside>
+<!-- Main Content -->
+<main class="ml-sidebar-width w-[calc(100%-spacing.sidebar-width)] flex-1 min-h-screen flex flex-col bg-background relative">
+<!-- TopNavBar -->
+<header class="sticky top-0 z-10 bg-surface dark:bg-surface-dim flex justify-between items-center h-16 px-margin-desktop shadow-sm">
+<div class="flex items-center gap-4">
+<span class="font-headline-md text-headline-md text-primary">Sistema Pastoral</span>
+</div>
+<div class="flex items-center space-x-6">
+<!-- Search Bar -->
+<div class="relative hidden md:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-1.5 pl-10 pr-4 font-body-sm text-body-sm text-on-surface focus:ring-1 focus:ring-primary outline-none placeholder:text-on-surface-variant" placeholder="Buscar..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABtqqzEqPEAC1avaQuvbSdQeqVTE2AlIEqdiDTnnOQLt0FEbj3UOTlXmKanwHvIE0Kvw0TAMWVyus0vORP2pVQsQl6_v619HcaYS95lD3ZOyP-IN-o-ef5GgZ_6N15eF8MGHSOAxShd6L1hyiSekR9XUMz3PyEdP0fOonF2NjJOct4pO_81o9VjW6zxiM92JekI9Rp5qILGWUKBZvZGr2RI6X7N4eB6uxFJNN6Ox-yI6CON98SqYocRQC0tluIahkO8nDL8UBySdg"/>
+</div>
+</div>
+</header>
+<!-- Page Content Canvas -->
+<div class="flex-1 p-margin-desktop max-w-container-max mx-auto w-full">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-stack-lg gap-4">
+<div>
+<nav class="flex items-center text-on-surface-variant font-label-sm text-label-sm mb-2 space-x-2">
+<a class="hover:text-primary transition-colors" href="#">Cadastro</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-on-surface">Novo</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Ficha do Beneficiário</h2>
+</div>
+<div class="flex space-x-4">
+<button class="px-6 py-2 rounded-full border border-outline text-on-surface font-label-md text-label-md hover:bg-surface-container-low transition-colors">
+                        Salvar Rascunho
+                    </button>
+<button class="px-6 py-2 rounded-full bg-primary text-on-primary font-label-md text-label-md hover:bg-primary-container transition-colors shadow-sm">
+                        Salvar Cadastro
+                    </button>
+</div>
+</div>
+<!-- Form Container -->
+<div class="bg-surface rounded-xl shadow-sm border border-surface-variant overflow-hidden">
+<!-- Tabs Navigation -->
+<div class="border-b border-surface-variant flex overflow-x-auto no-scrollbar bg-surface-bright">
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-primary border-b-2 border-primary" data-target="tab-dados-pessoais">
+                        Dados Pessoais
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-contato">
+                        Contato e Endereço
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-familia">
+                        Composição Familiar
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-socio">
+                        Situação Socioeconômica
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-beneficios">
+                        Benefícios Recebidos
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-docs">
+                        Documentos
+                    </button>
+<button class="tab-btn px-6 py-4 font-label-md text-label-md whitespace-nowrap text-on-surface-variant hover:text-primary transition-colors" data-target="tab-hist">
+                        Histórico
+                    </button>
+</div>
+<!-- Tabs Content Area -->
+<div class="p-8">
+<!-- Tab 1: Dados Pessoais -->
+<div class="tab-content active space-y-6" id="tab-dados-pessoais">
+<div class="flex flex-col md:flex-row gap-8">
+<!-- Photo Upload -->
+<div class="flex-shrink-0 flex flex-col items-center gap-3">
+<div class="w-32 h-32 rounded-full bg-surface-container-low border-2 border-dashed border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container hover:border-primary transition-colors cursor-pointer overflow-hidden relative group">
+<span class="material-symbols-outlined text-3xl group-hover:hidden">add_a_photo</span>
+<div class="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
+<span class="text-white font-label-sm text-label-sm">Alterar Foto</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Foto (opcional)</span>
+</div>
+<!-- Inputs Grid -->
+<div class="flex-grow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div class="col-span-full md:col-span-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Nome Completo</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="Ex: Maria da Silva" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">CPF</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="000.000.000-00" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">RG</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Data de Nascimento</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="date"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Sexo</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow appearance-none">
+<option value="">Selecione...</option>
+<option value="F">Feminino</option>
+<option value="M">Masculino</option>
+<option value="O">Outro</option>
+</select>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Estado Civil</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow appearance-none">
+<option value="">Selecione...</option>
+<option>Solteiro(a)</option>
+<option>Casado(a)</option>
+<option>Divorciado(a)</option>
+<option>Viúvo(a)</option>
+</select>
+</div>
+<div class="col-span-full md:col-span-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Escolaridade</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow appearance-none">
+<option value="">Selecione...</option>
+<option>Ensino Fundamental Incompleto</option>
+<option>Ensino Fundamental Completo</option>
+<option>Ensino Médio Incompleto</option>
+<option>Ensino Médio Completo</option>
+<option>Ensino Superior</option>
+</select>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab 2: Contato e Endereço -->
+<div class="tab-content space-y-8" id="tab-contato">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Telefone Principal</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="(00) 00000-0000" type="tel"/>
+</div>
+<div class="flex items-end pb-1 gap-2">
+<input class="rounded text-primary focus:ring-primary h-4 w-4 border-outline-variant" id="is-whatsapp" type="checkbox"/>
+<label class="font-body-sm text-body-sm text-on-surface-variant" for="is-whatsapp">Este número é WhatsApp</label>
+</div>
+<div class="col-span-full lg:col-span-1 lg:row-start-1 lg:col-start-3">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">E-mail</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="email@exemplo.com" type="email"/>
+</div>
+</div>
+<div class="border-t border-surface-variant pt-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+<div class="md:col-span-3">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">CEP</label>
+<div class="flex gap-2">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="00000-000" type="text"/>
+<button class="px-3 py-2 rounded-md bg-surface-container hover:bg-surface-container-high border border-outline-variant text-on-surface transition-colors" title="Buscar CEP">
+<span class="material-symbols-outlined text-sm">search</span>
+</button>
+</div>
+</div>
+<div class="md:col-span-7">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Logradouro (Rua, Av.)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="text"/>
+</div>
+<div class="md:col-span-2">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Número</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="text"/>
+</div>
+<div class="md:col-span-4">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Complemento</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" placeholder="Apto, Bloco, etc." type="text"/>
+</div>
+<div class="md:col-span-4">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Bairro</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="text"/>
+</div>
+<div class="md:col-span-3">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Cidade</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" type="text"/>
+</div>
+<div class="md:col-span-1">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">UF</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-md px-3 py-2 text-body-md text-on-surface focus:border-tertiary focus:ring-1 focus:ring-tertiary outline-none transition-shadow" maxlength="2" type="text"/>
+</div>
+</div>
+</div>
+<!-- Placeholder for other tabs to keep code concise but functional -->
+<div class="tab-content text-center py-12" id="tab-familia">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">group</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Composição Familiar</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md mx-auto">Área reservada para adicionar os membros da família que residem com o beneficiário.</p>
+<button class="mt-6 px-4 py-2 border border-outline text-on-surface font-label-md rounded-full hover:bg-surface-container-low inline-flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">add</span> Adicionar Membro
+                        </button>
+</div>
+<div class="tab-content text-center py-12" id="tab-socio">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">home_work</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Situação Socioeconômica</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Detalhes sobre renda, condições de moradia e outros benefícios sociais.</p>
+</div>
+<div class="tab-content text-center py-12" id="tab-beneficios">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">redeem</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Benefícios Recebidos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Seleção de auxílios e benefícios concedidos pela instituição.</p>
+</div>
+<div class="tab-content text-center py-12" id="tab-docs">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">folder_open</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Documentos Anexos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Upload de cópias de RG, CPF, comprovante de residência, etc.</p>
+</div>
+<div class="tab-content text-center py-12" id="tab-hist">
+<span class="material-symbols-outlined text-4xl text-on-surface-variant mb-4">history</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Histórico de Atendimentos</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">Registro cronológico de todas as interações e auxílios prestados a este beneficiário.</p>
+<div class="mt-4 inline-block bg-surface-container-low px-3 py-1 rounded text-sm text-on-surface-variant">Apenas visível após primeiro salvamento</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<script>
+        // Simple Tab Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Remove active styles from all buttons
+                    tabBtns.forEach(b => {
+                        b.classList.remove('text-primary', 'border-b-2', 'border-primary', 'font-bold');
+                        b.classList.add('text-on-surface-variant');
+                    });
+                    
+                    // Hide all content
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    // Add active style to clicked button
+                    btn.classList.add('text-primary', 'border-b-2', 'border-primary', 'font-bold');
+                    btn.classList.remove('text-on-surface-variant');
+
+                    // Show target content
+                    const targetId = btn.getAttribute('data-target');
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+        });
+    </script>
+</body></html>

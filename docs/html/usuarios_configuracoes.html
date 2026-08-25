@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sistema Pastoral - Usuários &amp; Configurações</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Playfair+Display:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#75796b",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#394d14",
+                        "on-surface": "#1a1c1a",
+                        "primary": "#3e5219",
+                        "on-background": "#1a1c1a",
+                        "surface-bright": "#faf9f6",
+                        "surface-container-low": "#f4f3f1",
+                        "on-primary-container": "#d0eba1",
+                        "tertiary-fixed": "#ffdea5",
+                        "secondary-fixed-dim": "#dfc29f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c176",
+                        "inverse-on-surface": "#f2f1ee",
+                        "secondary-container": "#f9dbb7",
+                        "secondary-fixed": "#fcdeba",
+                        "inverse-primary": "#b6d088",
+                        "tertiary": "#634705",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-container": "#755f42",
+                        "surface-container-high": "#e9e8e5",
+                        "primary-fixed": "#d2eca2",
+                        "primary-container": "#556b2f",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffdc9f",
+                        "surface": "#faf9f6",
+                        "surface-variant": "#e3e2e0",
+                        "tertiary-container": "#7d5f1e",
+                        "surface-container": "#efeeeb",
+                        "background": "#faf9f6",
+                        "surface-dim": "#dbdad7",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#715b3e",
+                        "primary-fixed-dim": "#b6d088",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#131f00",
+                        "surface-tint": "#50652a",
+                        "on-tertiary-fixed-variant": "#5d4201",
+                        "on-surface-variant": "#45483c",
+                        "inverse-surface": "#2f312f",
+                        "on-tertiary-fixed": "#261900",
+                        "surface-container-highest": "#e3e2e0",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed": "#281903",
+                        "outline-variant": "#c5c8b8",
+                        "on-secondary-fixed-variant": "#574329"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "sidebar-width": "280px",
+                        "stack-lg": "24px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "sidebar-collapsed": "80px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Playfair Display"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Playfair Display"],
+                        "headline-lg": ["Playfair Display"],
+                        "body-md": ["Inter"],
+                        "display-lg-mobile": ["Playfair Display"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-lg-mobile": ["32px", { "lineHeight": "40px", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "body-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+        /* Hide scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e3e2e0;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #c5c8b8;
+        }
+        /* Custom modal animation */
+        @keyframes modalEnter {
+            from { opacity: 0; transform: scale(0.95) translateX(20px); }
+            to { opacity: 1; transform: scale(1) translateX(0); }
+        }
+        .modal-animate {
+            animation: modalEnter 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md overflow-x-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-screen py-6 px-4 bg-surface fixed left-0 top-0 w-sidebar-width border-r border-surface-variant z-40 bg-surface-container-low shadow-sm">
+<!-- Brand -->
+<div class="flex items-center gap-4 px-4 mb-8">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined fill">church</span>
+</div>
+<div>
+<h1 class="font-display-lg text-headline-md text-primary m-0 p-0 leading-none">Pastoral</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Filantropia Inteligente</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<div class="flex-1 overflow-y-auto space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span>Home</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">person_add</span>
+<span>Cadastro</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Financeiro</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span>Atendimentos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span>Relatórios</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary font-bold border-r-4 border-primary bg-primary-container/10" href="#">
+<span class="material-symbols-outlined fill">group</span>
+<span>Usuários</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant font-medium hover:bg-secondary-container transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configurações</span>
+</a>
+</div>
+<!-- User Quick Profile -->
+<div class="mt-auto pt-4 border-t border-surface-variant px-2">
+<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-surface-variant cursor-pointer transition-colors">
+<img alt="Avatar" class="w-10 h-10 rounded-full border border-surface-variant" data-alt="Portrait of a friendly, professional social worker in a modern office setting. Soft, natural lighting highlights a warm smile. Corporate modern aesthetic with earthy tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeChCXStR8iEBDJb4N75XtnpD-qORZ-Ul6Knp5lZj6qsoQxkrxBrWfq0NZvSO2al3rWnuajsGr8qhc50oa2fzhTXFfHmt1rU_oVRlEYttWwlQHA6mBc8dksd5cWgrBkLt8vdl-eDyEipuP6q84-H9Lj3bsg4wKHrSAmLpPs36ctcSZZFzyk0_8xkRl30dD5Ek8r0zELi-PBOLcZQVBLTQnOqnZgIMZs-DGzp8wsTGwlT3N49Ta6mQJ5OtlzWcr2FG9DRxhQUCXdp0"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-md text-label-md text-on-surface truncate">Maria Silva</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant truncate">Administrador</p>
+</div>
+</div>
+</div>
+</nav>
+<!-- TopNavBar (Desktop) -->
+<header class="hidden md:flex justify-between items-center h-16 px-margin-desktop ml-sidebar-width w-[calc(100%-spacing.sidebar-width)] bg-surface-bright shadow-sm fixed top-0 z-30">
+<!-- Breadcrumb -->
+<div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+<a class="hover:text-primary transition-colors" href="#">Sistema Pastoral</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-primary font-bold border-b-2 border-primary pb-1">Usuários &amp; Configurações</span>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-4">
+<div class="relative">
+<input aria-label="Search" class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full focus:ring-2 focus:ring-primary focus:bg-surface w-64 text-sm transition-all" placeholder="Buscar..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+</div>
+<button class="w-10 h-10 rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="w-10 h-10 rounded-full hover:bg-surface-variant flex items-center justify-center text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">logout</span>
+</button>
+</div>
+</header>
+<!-- Mobile Header Placeholder (Simplified for this exercise to focus on content layout) -->
+<header class="md:hidden flex justify-between items-center h-16 px-4 bg-surface shadow-sm sticky top-0 z-30">
+<h1 class="font-headline-md text-headline-md text-primary">Usuários</h1>
+<button class="text-on-surface"><span class="material-symbols-outlined">menu</span></button>
+</header>
+<!-- Main Content Area -->
+<main class="md:ml-sidebar-width pt-16 md:pt-24 px-4 md:px-margin-desktop pb-24 max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-2">Gestão de Usuários</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gerencie acessos, perfis e permissões da equipe e voluntários.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 border border-secondary text-secondary rounded-lg font-label-md text-label-md hover:bg-secondary/5 transition-colors flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">settings</span>
+                    Configurações
+                </button>
+<button class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-md text-label-md hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm" onclick="document.getElementById('userModal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-sm">add</span>
+                    Novo Usuário
+                </button>
+</div>
+</div>
+<!-- Dashboard Layout: Bento Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Users Table (Span 8) -->
+<div class="lg:col-span-8 space-y-6">
+<!-- Data Card -->
+<div class="bg-surface rounded-xl border border-surface-variant shadow-[0_2px_4px_rgba(0,0,0,0.05)] overflow-hidden">
+<!-- Filters/Actions inside card -->
+<div class="p-4 border-b border-surface-variant flex flex-col sm:flex-row justify-between items-center gap-4 bg-surface-bright">
+<div class="flex gap-2 w-full sm:w-auto">
+<span class="px-3 py-1 bg-primary-container/20 text-primary-container rounded-full font-label-sm text-label-sm border border-primary-container/30">Todos (12)</span>
+<span class="px-3 py-1 text-on-surface-variant rounded-full font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer transition-colors">Admins (3)</span>
+<span class="px-3 py-1 text-on-surface-variant rounded-full font-label-sm text-label-sm hover:bg-surface-variant cursor-pointer transition-colors">Voluntários (7)</span>
+</div>
+<div class="relative w-full sm:w-auto">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-9 pr-4 py-1.5 w-full bg-surface border border-surface-variant rounded-md text-sm focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Buscar usuário..." type="text"/>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-surface-variant">
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-semibold">Usuário</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-semibold">Contato</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-semibold">Perfil</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-semibold">Status</th>
+<th class="p-4 font-label-md text-label-md text-on-surface-variant font-semibold text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm">
+<!-- Row 1 -->
+<tr class="border-b border-surface-variant/50 hover:bg-[#F5F5DC]/20 transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-bold text-xs">MS</div>
+<div>
+<p class="font-medium text-on-surface">Maria Silva</p>
+<p class="text-xs text-on-surface-variant">Desde Jan 2023</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">maria.silva@pastoral.org</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-secondary-container/30 text-secondary-container font-medium text-xs border border-secondary-container/50">
+<span class="material-symbols-outlined text-[14px]">shield_person</span>
+                                            Admin
+                                        </span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span>Ativo</span>
+</div>
+</td>
+<td class="p-4 text-right">
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1 text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-surface-variant/50 hover:bg-[#F5F5DC]/20 transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xs">JO</div>
+<div>
+<p class="font-medium text-on-surface">João Oliveira</p>
+<p class="text-xs text-on-surface-variant">Desde Mar 2023</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">joao.o@pastoral.org</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-variant text-on-surface-variant font-medium text-xs border border-outline-variant">
+<span class="material-symbols-outlined text-[14px]">manage_accounts</span>
+                                            Gestor
+                                        </span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-1.5">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span>Ativo</span>
+</div>
+</td>
+<td class="p-4 text-right">
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1 text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="border-b border-surface-variant/50 hover:bg-[#F5F5DC]/20 transition-colors group">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-xs">AL</div>
+<div>
+<p class="font-medium text-on-surface">Ana Luiza</p>
+<p class="text-xs text-on-surface-variant">Desde Ago 2023</p>
+</div>
+</div>
+</td>
+<td class="p-4 text-on-surface-variant">ana.voluntaria@email.com</td>
+<td class="p-4">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-container text-on-surface-variant font-medium text-xs border border-surface-dim">
+<span class="material-symbols-outlined text-[14px]">volunteer_activism</span>
+                                            Voluntário
+                                        </span>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-1.5 opacity-60">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<span>Inativo</span>
+</div>
+</td>
+<td class="p-4 text-right">
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">edit</span></button>
+<button class="p-1 text-on-surface-variant hover:text-error transition-colors opacity-0 group-hover:opacity-100"><span class="material-symbols-outlined text-[20px]">delete</span></button>
+<button class="p-1 text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Skeleton Loading Row Example -->
+<tr class="border-b border-surface-variant/50 animate-pulse bg-surface-container-low/50">
+<td class="p-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant"></div>
+<div class="space-y-2">
+<div class="h-4 w-24 bg-surface-variant rounded"></div>
+<div class="h-3 w-16 bg-surface-variant rounded"></div>
+</div>
+</div>
+</td>
+<td class="p-4"><div class="h-4 w-32 bg-surface-variant rounded"></div></td>
+<td class="p-4"><div class="h-6 w-20 bg-surface-variant rounded-md"></div></td>
+<td class="p-4"><div class="h-4 w-16 bg-surface-variant rounded"></div></td>
+<td class="p-4 text-right"><div class="h-6 w-6 bg-surface-variant rounded inline-block"></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-4 border-t border-surface-variant flex items-center justify-between bg-surface-bright font-body-sm text-body-sm text-on-surface-variant">
+<span>Mostrando 1 a 4 de 12 registros</span>
+<div class="flex gap-1">
+<button class="p-1 rounded hover:bg-surface-variant disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="px-2 py-1 rounded bg-primary-container text-on-primary-container font-medium">1</button>
+<button class="px-2 py-1 rounded hover:bg-surface-variant">2</button>
+<button class="px-2 py-1 rounded hover:bg-surface-variant">3</button>
+<button class="p-1 rounded hover:bg-surface-variant"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Settings Preview (Span 4) -->
+<div class="lg:col-span-4 space-y-6">
+<!-- Quick Settings Tabs -->
+<div class="bg-surface rounded-xl border border-surface-variant shadow-[0_2px_4px_rgba(0,0,0,0.05)] p-1 flex bg-surface-container-low">
+<button class="flex-1 py-2 text-center font-label-sm text-label-sm font-semibold bg-surface rounded-lg shadow-sm text-primary">Instituição</button>
+<button class="flex-1 py-2 text-center font-label-sm text-label-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Categorias</button>
+<button class="flex-1 py-2 text-center font-label-sm text-label-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Meu Perfil</button>
+</div>
+<!-- Settings Card (Institution Details) -->
+<div class="bg-surface rounded-xl border border-surface-variant shadow-[0_2px_4px_rgba(0,0,0,0.05)] p-6">
+<div class="flex items-start justify-between mb-6">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1 text-lg">Dados da Instituição</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Informações base para relatórios.</p>
+</div>
+<button class="text-primary hover:bg-primary-container/20 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+</div>
+<div class="flex items-center gap-4 mb-6 pb-6 border-b border-surface-variant">
+<div class="w-16 h-16 rounded-xl bg-surface-variant border border-outline-variant flex items-center justify-center overflow-hidden relative group">
+<span class="material-symbols-outlined text-on-surface-variant text-3xl">domain</span>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+<span class="material-symbols-outlined text-white text-sm">upload</span>
+</div>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface font-semibold">Pastoral Social São José</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">CNPJ: 12.345.678/0001-90</p>
+</div>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Endereço Principal</label>
+<p class="font-body-sm text-body-sm text-on-surface bg-surface-container-low p-3 rounded-lg border border-surface-dim">Rua das Flores, 123, Centro - SP<br/>CEP: 01234-567</p>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1">Telefone de Contato</label>
+<p class="font-body-sm text-body-sm text-on-surface bg-surface-container-low p-3 rounded-lg border border-surface-dim">(11) 3456-7890</p>
+</div>
+</div>
+</div>
+<!-- Info Banner -->
+<div class="bg-secondary-container/20 border border-secondary-container rounded-xl p-4 flex gap-3 items-start">
+<span class="material-symbols-outlined text-secondary mt-0.5">info</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-semibold">Configurações de Categorias</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">Lembre-se de configurar as categorias financeiras antes de gerar o próximo balancete mensal.</p>
+<a class="inline-block mt-2 font-label-sm text-label-sm text-secondary font-semibold hover:underline" href="#">Ir para Categorias →</a>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Slide-in Drawer Modal for "Novo Usuário" (Desktop Right Drawer, Mobile Modal) -->
+<div class="hidden fixed inset-0 z-50 flex items-center justify-center md:justify-end" id="userModal">
+<!-- Backdrop -->
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm" onclick="document.getElementById('userModal').classList.add('hidden')"></div>
+<!-- Drawer Panel -->
+<div class="relative bg-surface w-full md:w-[480px] h-full md:h-screen shadow-[0px_10px_25px_rgba(0,0,0,0.08)] flex flex-col modal-animate border-l border-surface-variant">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-surface-variant flex items-center justify-between bg-surface-bright">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface text-xl">Novo Usuário</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cadastre um novo acesso ao sistema.</p>
+</div>
+<button class="p-2 text-on-surface-variant hover:bg-surface-variant rounded-full transition-colors" onclick="document.getElementById('userModal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body (Form) -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Avatar Upload -->
+<div class="flex items-center gap-4">
+<div class="w-16 h-16 rounded-full bg-surface-variant flex items-center justify-center border border-outline border-dashed">
+<span class="material-symbols-outlined text-on-surface-variant">person</span>
+</div>
+<div>
+<button class="px-3 py-1.5 border border-outline text-on-surface rounded-md font-label-sm text-label-sm hover:bg-surface-variant transition-colors mb-1">Fazer Upload</button>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-xs">JPG ou PNG, máx 2MB.</p>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Input field example mimicking high-end UI -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 ml-1">Nome Completo *</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface placeholder:text-on-surface-variant/50 focus:border-tertiary-container focus:ring-1 focus:ring-tertiary-container transition-all shadow-sm" placeholder="Ex: João da Silva" type="text"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 ml-1">E-mail *</label>
+<input class="w-full bg-surface border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface placeholder:text-on-surface-variant/50 focus:border-tertiary-container focus:ring-1 focus:ring-tertiary-container transition-all shadow-sm" placeholder="joao@exemplo.com" type="email"/>
+</div>
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 ml-1">Perfil de Acesso *</label>
+<div class="relative">
+<select class="w-full bg-surface border border-outline-variant rounded-lg pl-4 pr-10 py-2.5 text-on-surface appearance-none focus:border-tertiary-container focus:ring-1 focus:ring-tertiary-container transition-all shadow-sm">
+<option disabled="" selected="" value="">Selecione um perfil...</option>
+<option value="admin">Administrador</option>
+<option value="gestor">Gestor (Acesso Restrito)</option>
+<option value="voluntario">Voluntário (Apenas Leitura/Lançamento)</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none">expand_more</span>
+</div>
+</div>
+<div class="pt-2">
+<label class="flex items-center gap-3 p-3 border border-surface-variant rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<input checked="" class="w-5 h-5 rounded border-outline text-primary focus:ring-primary" type="checkbox"/>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface font-semibold">Enviar convite por e-mail</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant text-xs">O usuário receberá um link para definir sua senha.</p>
+</div>
+</label>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-6 border-t border-surface-variant bg-surface-bright flex justify-end gap-3">
+<button class="px-5 py-2.5 rounded-lg border border-outline text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-colors" onclick="document.getElementById('userModal').classList.add('hidden')">Cancelar</button>
+<button class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md hover:bg-primary/90 transition-colors shadow-sm">Salvar Usuário</button>
+</div>
+</div>
+</div>
+<!-- Toast Notification (Positioned bottom-right) -->
+<div class="fixed bottom-6 right-6 flex items-center gap-3 px-4 py-3 bg-inverse-surface text-inverse-on-surface rounded-lg shadow-[0_10px_25px_rgba(0,0,0,0.08)] z-50 transform translate-y-20 opacity-0 transition-all duration-300" id="toast">
+<span class="material-symbols-outlined text-primary-fixed">check_circle</span>
+<p class="font-body-sm text-body-sm">Configurações salvas com sucesso.</p>
+<button class="ml-2 text-inverse-on-surface/70 hover:text-inverse-on-surface"><span class="material-symbols-outlined text-sm">close</span></button>
+</div>
+<script>
+        // Simple script to demonstrate toast appearance (for interactivity demo)
+        setTimeout(() => {
+            const toast = document.getElementById('toast');
+            if(toast) {
+                toast.classList.remove('translate-y-20', 'opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('translate-y-20', 'opacity-0');
+                }, 4000);
+            }
+        }, 1500);
+    </script>
+</body></html>

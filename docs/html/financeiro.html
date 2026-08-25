@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sistema Pastoral - Controle Financeiro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline": "#75796b",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed-variant": "#394d14",
+                      "on-surface": "#1a1c1a",
+                      "primary": "#3e5219",
+                      "on-background": "#1a1c1a",
+                      "surface-bright": "#faf9f6",
+                      "surface-container-low": "#f4f3f1",
+                      "on-primary-container": "#d0eba1",
+                      "tertiary-fixed": "#ffdea5",
+                      "secondary-fixed-dim": "#dfc29f",
+                      "on-primary": "#ffffff",
+                      "tertiary-fixed-dim": "#e9c176",
+                      "inverse-on-surface": "#f2f1ee",
+                      "secondary-container": "#f9dbb7",
+                      "secondary-fixed": "#fcdeba",
+                      "inverse-primary": "#b6d088",
+                      "tertiary": "#634705",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-container": "#755f42",
+                      "surface-container-high": "#e9e8e5",
+                      "primary-fixed": "#d2eca2",
+                      "primary-container": "#556b2f",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#ffdc9f",
+                      "surface": "#faf9f6",
+                      "surface-variant": "#e3e2e0",
+                      "tertiary-container": "#7d5f1e",
+                      "surface-container": "#efeeeb",
+                      "background": "#faf9f6",
+                      "surface-dim": "#dbdad7",
+                      "on-tertiary": "#ffffff",
+                      "secondary": "#715b3e",
+                      "primary-fixed-dim": "#b6d088",
+                      "error": "#ba1a1a",
+                      "on-error": "#ffffff",
+                      "on-primary-fixed": "#131f00",
+                      "surface-tint": "#50652a",
+                      "on-tertiary-fixed-variant": "#5d4201",
+                      "on-surface-variant": "#45483c",
+                      "inverse-surface": "#2f312f",
+                      "on-tertiary-fixed": "#261900",
+                      "surface-container-highest": "#e3e2e0",
+                      "error-container": "#ffdad6",
+                      "on-secondary-fixed": "#281903",
+                      "outline-variant": "#c5c8b8",
+                      "on-secondary-fixed-variant": "#574329",
+                      "success": "#198754",
+                      "on-success": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-max": "1440px",
+                      "margin-mobile": "16px",
+                      "gutter": "24px",
+                      "sidebar-width": "280px",
+                      "stack-lg": "24px",
+                      "stack-md": "16px",
+                      "stack-sm": "8px",
+                      "sidebar-collapsed": "80px",
+                      "margin-desktop": "32px"
+              },
+              "fontFamily": {
+                      "display-lg": [
+                              "Playfair Display"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Playfair Display"
+                      ],
+                      "headline-lg": [
+                              "Playfair Display"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "display-lg-mobile": [
+                              "Playfair Display"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-sm": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      }
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex bg-surface dark:bg-surface-dim font-body-md text-body-md fixed left-0 top-0 h-full w-sidebar-width bg-surface-container-low dark:bg-surface-dim shadow-sm flex flex-col h-screen py-6 px-4 z-20">
+<div class="flex items-center gap-4 mb-10 px-2">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-display-lg text-display-lg overflow-hidden shrink-0">
+<span class="text-xl">P</span>
+</div>
+<div>
+<h1 class="font-display-lg text-display-lg text-primary dark:text-primary-fixed-dim text-2xl font-bold">Pastoral</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Filantropia Inteligente</p>
+</div>
+</div>
+<ul class="flex-1 flex flex-col gap-2">
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">home</span>
+<span>Home</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">person_add</span>
+<span>Cadastro</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-primary dark:text-inverse-primary font-bold border-r-4 border-primary bg-secondary-container bg-opacity-20 hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined icon-fill">payments</span>
+<span>Financeiro</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">volunteer_activism</span>
+<span>Atendimentos</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span>Relatórios</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">group</span>
+<span>Usuários</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant dark:text-on-surface-variant font-medium hover:bg-secondary-container dark:hover:bg-surface-container-highest transition-colors active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Configurações</span>
+</a>
+</li>
+</ul>
+</nav>
+<!-- Main Wrapper -->
+<div class="flex-1 flex flex-col md:ml-sidebar-width w-full h-full relative">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-surface-dim font-label-md text-label-md docked full-width top-0 bg-surface-bright dark:bg-surface-dim shadow-sm flex justify-between items-center h-16 px-margin-mobile md:px-margin-desktop sticky z-10">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-on-surface">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="font-headline-md text-headline-md text-primary hidden md:block">Sistema Pastoral</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="pl-9 pr-4 py-1.5 rounded-full border border-outline-variant bg-surface-container-lowest text-body-sm font-body-sm focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary transition-colors w-64" placeholder="Buscar..." type="text"/>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors active:opacity-80">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed transition-colors active:opacity-80 hidden sm:block">
+<span class="material-symbols-outlined">logout</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden shrink-0 border border-outline-variant ml-2">
+<img alt="Avatar do Usuário" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGbMzndWdr7uRAEx3wstAkFXH01PLvlkNzbxa0hcFXdgsApzPNsjgAEmAYtCHMTcAyT3N2kUkp3AGLbb9JI9gV2eVcIXthCQtZQ-QrG9cdGkryKf07oEMXFNY7ZCFshgkDpn96d_Em-hYAtQcoS6kbtuRa9GmY_vtokHcgetHo5en1evJkUSWIGNArOcR2mVFaaxJTKgmylmDAIbVR391cJhxCG8NSMF8dloZMhVXScgaiW63XvMo35idvnYoxIxckbwx_olf-cY8"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 overflow-y-auto p-margin-mobile md:p-margin-desktop">
+<div class="max-w-container-max mx-auto space-y-stack-lg pb-24">
+<!-- Header & Actions -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-sm text-label-sm mb-1">
+<span>Sistema</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-medium">Financeiro</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Controle Financeiro</h2>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-full hover:bg-primary-container hover:shadow-md transition-all flex items-center gap-2" onclick="document.getElementById('modal-novo-lancamento').classList.remove('hidden')">
+<span class="material-symbols-outlined text-sm">add</span>
+                        Novo Lançamento
+                    </button>
+</div>
+<!-- Resumo / Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Entradas</span>
+<span class="material-symbols-outlined text-success bg-success bg-opacity-10 p-2 rounded-full">arrow_upward</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">R$ 15.420,00</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">+12% vs. mês anterior</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant shadow-sm flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Total Saídas</span>
+<span class="material-symbols-outlined text-error bg-error bg-opacity-10 p-2 rounded-full">arrow_downward</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-surface">R$ 4.250,00</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-2">-5% vs. mês anterior</div>
+</div>
+<div class="bg-primary text-on-primary rounded-xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
+<div class="absolute -right-6 -top-6 w-32 h-32 bg-white opacity-10 rounded-full blur-xl"></div>
+<div class="flex justify-between items-start mb-4 relative z-10">
+<span class="font-label-md text-label-md text-on-primary-container uppercase tracking-wider">Saldo Atual</span>
+<span class="material-symbols-outlined text-on-primary">account_balance_wallet</span>
+</div>
+<div class="font-display-lg text-display-lg text-on-primary relative z-10">R$ 11.170,00</div>
+<div class="font-body-sm text-body-sm text-on-primary-container mt-2 relative z-10">Fechamento previsto positivo</div>
+</div>
+</div>
+<!-- Tabs & Filters -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm overflow-hidden">
+<div class="border-b border-outline-variant px-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div class="flex gap-6 -mb-px">
+<button class="py-4 font-label-md text-label-md text-primary border-b-2 border-primary font-semibold">
+                                Todas Movimentações
+                            </button>
+<button class="py-4 font-label-md text-label-md text-on-surface-variant border-b-2 border-transparent hover:text-primary transition-colors">
+                                Entradas
+                            </button>
+<button class="py-4 font-label-md text-label-md text-on-surface-variant border-b-2 border-transparent hover:text-primary transition-colors">
+                                Saídas
+                            </button>
+</div>
+<div class="py-3 flex items-center gap-3">
+<select class="rounded-lg border-outline-variant bg-surface text-body-sm font-body-sm py-1.5 focus:border-tertiary focus:ring-tertiary">
+<option>Este Mês</option>
+<option>Mês Anterior</option>
+<option>Últimos 90 dias</option>
+<option>Personalizado...</option>
+</select>
+<button class="text-on-surface-variant border border-outline-variant rounded-lg p-1.5 hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+</div>
+</div>
+<!-- Tabela -->
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant font-label-sm text-label-sm text-on-surface-variant">
+<th class="py-3 px-6 font-medium">Data</th>
+<th class="py-3 px-6 font-medium">Descrição</th>
+<th class="py-3 px-6 font-medium">Categoria</th>
+<th class="py-3 px-6 font-medium text-right">Valor</th>
+<th class="py-3 px-6 font-medium">Responsável</th>
+<th class="py-3 px-6 font-medium text-center">Ações</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-outline-variant">
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6 whitespace-nowrap">15 Out 2023</td>
+<td class="py-4 px-6">
+<div class="font-medium">Doação Anônima</div>
+<div class="text-label-sm text-on-surface-variant mt-0.5">PIX</div>
+</td>
+<td class="py-4 px-6">
+<span class="bg-tertiary-container text-on-tertiary-container px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide">Doações</span>
+</td>
+<td class="py-4 px-6 text-right font-medium text-success">+ R$ 500,00</td>
+<td class="py-4 px-6 text-on-surface-variant">Irmã Maria</td>
+<td class="py-4 px-6 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6 whitespace-nowrap">14 Out 2023</td>
+<td class="py-4 px-6">
+<div class="font-medium">Compra de Cestas Básicas</div>
+<div class="text-label-sm text-on-surface-variant mt-0.5">Transferência Bancária</div>
+</td>
+<td class="py-4 px-6">
+<span class="bg-secondary-container text-on-secondary-container px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide">Assistência</span>
+</td>
+<td class="py-4 px-6 text-right font-medium text-error">- R$ 1.200,00</td>
+<td class="py-4 px-6 text-on-surface-variant">Admin</td>
+<td class="py-4 px-6 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6 whitespace-nowrap">12 Out 2023</td>
+<td class="py-4 px-6">
+<div class="font-medium">Pagamento Conta de Luz</div>
+<div class="text-label-sm text-on-surface-variant mt-0.5">Boleto</div>
+</td>
+<td class="py-4 px-6">
+<span class="bg-surface-variant text-on-surface-variant px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide">Despesas Fixas</span>
+</td>
+<td class="py-4 px-6 text-right font-medium text-error">- R$ 350,00</td>
+<td class="py-4 px-6 text-on-surface-variant">João Silva</td>
+<td class="py-4 px-6 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">more_vert</span></button>
+</td>
+</tr>
+<tr class="hover:bg-[#F5F5DC]/20 transition-colors">
+<td class="py-4 px-6 whitespace-nowrap">10 Out 2023</td>
+<td class="py-4 px-6">
+<div class="font-medium">Campanha do Agasalho</div>
+<div class="text-label-sm text-on-surface-variant mt-0.5">Dinheiro</div>
+</td>
+<td class="py-4 px-6">
+<span class="bg-tertiary-container text-on-tertiary-container px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide">Eventos</span>
+</td>
+<td class="py-4 px-6 text-right font-medium text-success">+ R$ 2.450,00</td>
+<td class="py-4 px-6 text-on-surface-variant">Irmã Joana</td>
+<td class="py-4 px-6 text-center">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-1"><span class="material-symbols-outlined text-sm">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="px-6 py-4 border-t border-outline-variant flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant">
+<span>Mostrando 1 a 4 de 24 registros</span>
+<div class="flex gap-2">
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="p-1 border border-outline-variant rounded hover:bg-surface-container"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Modal Novo Lançamento (Right Drawer on Desktop, Modal on Mobile) -->
+<div class="hidden fixed inset-0 z-50 flex justify-end" id="modal-novo-lancamento">
+<div class="absolute inset-0 bg-on-surface/40 backdrop-blur-sm transition-opacity" onclick="document.getElementById('modal-novo-lancamento').classList.add('hidden')"></div>
+<div class="relative w-full max-w-md bg-surface-container-lowest h-full shadow-[0px_10px_25px_rgba(0,0,0,0.08)] flex flex-col transform transition-transform duration-300 ease-in-out border-l border-outline-variant md:rounded-l-2xl">
+<div class="px-6 py-5 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Novo Lançamento</h3>
+<button class="text-on-surface-variant hover:bg-surface-container rounded-full p-2 transition-colors" onclick="document.getElementById('modal-novo-lancamento').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 flex-1 overflow-y-auto space-y-6">
+<!-- Tipo -->
+<div class="space-y-2">
+<label class="font-label-sm text-label-sm text-on-surface block">Tipo de Lançamento</label>
+<div class="flex rounded-lg shadow-sm border border-outline-variant overflow-hidden">
+<button class="flex-1 py-2 font-label-md text-label-md bg-surface-container-lowest hover:bg-surface-container text-on-surface transition-colors focus:outline-none">
+                            Entrada
+                        </button>
+<div class="w-px bg-outline-variant"></div>
+<button class="flex-1 py-2 font-label-md text-label-md bg-surface-variant text-on-surface-variant transition-colors focus:outline-none">
+                            Saída
+                        </button>
+</div>
+</div>
+<!-- Valor & Data -->
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface block">Valor</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-body-sm">R$</span>
+<input class="w-full pl-10 pr-3 py-2 rounded-lg border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary" placeholder="0,00" type="text"/>
+</div>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface block">Data</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary text-on-surface-variant" type="date"/>
+</div>
+</div>
+<!-- Descrição -->
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface block">Descrição</label>
+<input class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary" placeholder="Ex: Doação Campanha X" type="text"/>
+</div>
+<!-- Categoria & Forma PGTO -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface block">Categoria</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary">
+<option value="">Selecione...</option>
+<option value="doacoes">Doações</option>
+<option value="eventos">Eventos</option>
+<option value="dizimos">Dízimos</option>
+<option value="assistencia">Assistência</option>
+<option value="despesas_fixas">Despesas Fixas</option>
+</select>
+</div>
+<div class="space-y-1">
+<label class="font-label-sm text-label-sm text-on-surface block">Forma de Pagamento</label>
+<select class="w-full px-3 py-2 rounded-lg border border-outline-variant bg-surface text-body-md focus:outline-none focus:border-tertiary focus:ring-1 focus:ring-tertiary">
+<option value="dinheiro">Dinheiro</option>
+<option value="pix">PIX</option>
+<option value="transf">Transferência</option>
+<option value="doacao">Doação em Espécie</option>
+</select>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant flex justify-end gap-3 bg-surface">
+<button class="px-5 py-2 font-label-md text-label-md text-secondary border border-secondary rounded-full hover:bg-secondary hover:text-on-secondary transition-colors" onclick="document.getElementById('modal-novo-lancamento').classList.add('hidden')">
+                    Cancelar
+                </button>
+<button class="px-5 py-2 font-label-md text-label-md bg-primary text-on-primary rounded-full hover:bg-primary-container hover:shadow-md transition-all">
+                    Salvar Lançamento
+                </button>
+</div>
+</div>
+</div>
+</body></html>
