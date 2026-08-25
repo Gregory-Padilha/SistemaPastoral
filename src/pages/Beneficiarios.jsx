@@ -697,110 +697,188 @@ export const Beneficiarios = () => {
 
       {/* Creation and Edit Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 bg-on-background/40 backdrop-blur-[2px] z-40 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-surface-variant">
+        <div className="fixed inset-0 bg-on-background/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface rounded-3xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-outline-variant/70 animate-in zoom-in-95 duration-200">
             {/* Modal Header */}
-            <header className="p-6 border-b border-surface-variant flex justify-between items-center bg-surface-container-low shrink-0">
-              <div>
-                <h3 className="font-headline-md text-headline-md text-primary font-semibold">
-                  {editingBeneficiario ? 'Editar Cadastro' : 'Novo Cadastro de Beneficiário'}
-                </h3>
-                <p className="text-body-sm text-on-surface-variant">Preencha todos os campos para registrar o beneficiário e sua família.</p>
+            <header className="p-5 sm:p-6 border-b border-outline-variant/60 bg-gradient-to-r from-primary/10 via-primary/5 to-surface-container-lowest flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-primary text-on-primary flex items-center justify-center font-bold shadow-xs shrink-0">
+                  <span className="material-symbols-outlined text-[22px]">
+                    {editingBeneficiario ? 'edit' : 'person_add'}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-display-lg text-lg sm:text-xl font-bold text-primary tracking-tight">
+                    {editingBeneficiario ? `Editar Cadastro: ${formData.nome || 'Beneficiário'}` : 'Novo Cadastro de Beneficiário'}
+                  </h3>
+                  <p className="text-xs text-on-surface-variant font-medium mt-0.5">
+                    Preencha as informações pessoais, socioeconômicas e familiares para assistência pastoral.
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setModalOpen(false)} className="p-1 text-on-surface hover:bg-surface-container rounded-lg">
-                <span className="material-symbols-outlined text-[24px]">close</span>
+              <button 
+                onClick={() => setModalOpen(false)} 
+                className="w-9 h-9 flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container rounded-xl transition-colors shrink-0"
+                title="Fechar"
+              >
+                <span className="material-symbols-outlined text-[22px]">close</span>
               </button>
             </header>
 
             {/* Form Section Navigation Tabs */}
-            <div className="flex border-b border-surface-variant bg-surface-container-lowest overflow-x-auto shrink-0">
+            <div className="flex items-center gap-1.5 p-2 bg-surface-container-lowest border-b border-outline-variant/60 overflow-x-auto shrink-0 scrollbar-none">
               {[
-                { id: 'pessoais', name: 'Dados Pessoais' },
-                { id: 'contato', name: 'Contato e Endereço' },
-                { id: 'socio', name: 'Sócio-Econômico' },
-                { id: 'familia', name: 'Composição Familiar' },
-                { id: 'documentos', name: 'Documentos' }
-              ].map(sec => (
-                <button
-                  key={sec.id}
-                  type="button"
-                  onClick={() => setFormSection(sec.id)}
-                  className={`px-5 py-3.5 text-body-sm font-semibold border-b-2 whitespace-nowrap transition-colors ${
-                    formSection === sec.id 
-                      ? 'border-primary text-primary bg-primary/5' 
-                      : 'border-transparent text-on-surface-variant hover:text-on-surface'
-                  }`}
-                >
-                  {sec.name}
-                </button>
-              ))}
+                { id: 'pessoais', name: 'Dados Pessoais', icon: 'person', step: 1 },
+                { id: 'contato', name: 'Contato e Endereço', icon: 'location_on', step: 2 },
+                { id: 'socio', name: 'Sócio-Econômico', icon: 'payments', step: 3 },
+                { id: 'familia', name: 'Família e Benefícios', icon: 'family_restroom', step: 4 },
+                { id: 'documentos', name: 'Documentos', icon: 'folder_open', step: 5 }
+              ].map(sec => {
+                const isActive = formSection === sec.id
+                return (
+                  <button
+                    key={sec.id}
+                    type="button"
+                    onClick={() => setFormSection(sec.id)}
+                    className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all select-none ${
+                      isActive 
+                        ? 'bg-primary text-on-primary shadow-xs' 
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface'
+                    }`}
+                  >
+                    <span className={`w-4.5 h-4.5 rounded-full text-[10px] font-extrabold flex items-center justify-center ${
+                      isActive ? 'bg-white/25 text-on-primary' : 'bg-surface-container-high text-on-surface-variant'
+                    }`}>
+                      {sec.step}
+                    </span>
+                    <span className="material-symbols-outlined text-[16px]">{sec.icon}</span>
+                    <span>{sec.name}</span>
+                  </button>
+                )
+              })}
             </div>
 
             {/* Modal Body / Scrollable Form */}
-            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-6">
+            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
               {/* SECTION: DADOS PESSOAIS */}
               {formSection === 'pessoais' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="md:col-span-2">
-                    <label className="block text-label-sm font-semibold mb-1">Nome Completo *</label>
-                    <input name="nome" value={formData.nome} onChange={handleInputChange} required className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">CPF (apenas números)</label>
-                    <input 
-                      name="cpf" 
-                      value={formData.cpf} 
-                      onChange={handleInputChange} 
-                      onBlur={handleCpfBlur}
-                      className={`w-full border rounded-lg px-3 py-2 bg-surface focus:ring-0 outline-none ${
-                        cpfError 
-                          ? 'border-red-500 bg-red-50 focus:border-red-500' 
-                          : 'border-outline-variant focus:border-primary'
-                      }`} 
-                      type="text" 
-                      placeholder="000.000.000-00" 
-                    />
-                    {cpfError && (
-                      <p className="text-red-500 text-xs mt-1">CPF inválido. Por favor, confira os números.</p>
-                    )}
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">
+                        Nome Completo <span className="text-primary">*</span>
+                      </label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">person</span>
+                        <input 
+                          name="nome" 
+                          value={formData.nome} 
+                          onChange={handleInputChange} 
+                          required 
+                          placeholder="Nome completo do beneficiário(a)" 
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">
+                        CPF (apenas números)
+                      </label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">badge</span>
+                        <input 
+                          name="cpf" 
+                          value={formData.cpf} 
+                          onChange={handleInputChange} 
+                          onBlur={handleCpfBlur}
+                          placeholder="000.000.000-00"
+                          className={`w-full pl-9.5 pr-3.5 py-2.5 rounded-xl text-xs font-medium outline-none transition-all shadow-xs ${
+                            cpfError 
+                              ? 'border-2 border-red-500 bg-red-50/50 text-red-900 focus:border-red-500' 
+                              : 'bg-surface-container-low border border-outline-variant/80 text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20'
+                          }`} 
+                          type="text" 
+                        />
+                      </div>
+                      {cpfError && (
+                        <p className="text-red-500 text-[11px] font-semibold mt-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">error</span>
+                          CPF inválido. Por favor, confira a numeração.
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">
+                        Data de Nascimento
+                      </label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">calendar_today</span>
+                        <input 
+                          name="data_nascimento" 
+                          value={formData.data_nascimento} 
+                          onChange={handleInputChange} 
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="date" 
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Sexo</label>
+                      <select 
+                        name="sexo" 
+                        value={formData.sexo} 
+                        onChange={handleInputChange} 
+                        className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-semibold text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs cursor-pointer"
+                      >
+                        <option value="Masculino">Masculino</option>
+                        <option value="Feminino">Feminino</option>
+                        <option value="Outro">Outro</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Estado Civil</label>
+                      <select 
+                        name="estado_civil" 
+                        value={formData.estado_civil} 
+                        onChange={handleInputChange} 
+                        className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-semibold text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs cursor-pointer"
+                      >
+                        <option value="Solteiro(a)">Solteiro(a)</option>
+                        <option value="Casado(a)">Casado(a)</option>
+                        <option value="União Estável">União Estável</option>
+                        <option value="Divorciado(a)">Divorciado(a)</option>
+                        <option value="Viúvo(a)">Viúvo(a)</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Escolaridade</label>
+                      <select 
+                        name="escolaridade" 
+                        value={formData.escolaridade} 
+                        onChange={handleInputChange} 
+                        className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-semibold text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs cursor-pointer"
+                      >
+                        <option value="Não Alfabetizado">Não Alfabetizado</option>
+                        <option value="Fundamental Incompleto">Ensino Fundamental Incompleto</option>
+                        <option value="Fundamental Completo">Ensino Fundamental Completo</option>
+                        <option value="Ensino Médio">Ensino Médio Completo</option>
+                        <option value="Superior Completo">Ensino Superior Completo</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Data de Nascimento</label>
-                    <input name="data_nascimento" value={formData.data_nascimento} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="date" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Sexo</label>
-                    <select name="sexo" value={formData.sexo} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none">
-                      <option value="Masculino">Masculino</option>
-                      <option value="Feminino">Feminino</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Estado Civil</label>
-                    <select name="estado_civil" value={formData.estado_civil} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none">
-                      <option value="Solteiro(a)">Solteiro(a)</option>
-                      <option value="Casado(a)">Casado(a)</option>
-                      <option value="Divorciado(a)">Divorciado(a)</option>
-                      <option value="Viúvo(a)">Viúvo(a)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Escolaridade</label>
-                    <select name="escolaridade" value={formData.escolaridade} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none">
-                      <option value="Fundamental Incompleto">Fundamental Incompleto</option>
-                      <option value="Fundamental Completo">Fundamental Completo</option>
-                      <option value="Ensino Médio">Ensino Médio</option>
-                      <option value="Superior Completo">Superior Completo</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2 flex flex-col items-center sm:items-start">
-                    <label className="block text-label-sm font-semibold mb-2">Foto de Perfil</label>
-                    <div className="relative group">
+                  {/* Foto de Perfil Modern Card */}
+                  <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/70 flex flex-col sm:flex-row items-center gap-5">
+                    <div className="relative group shrink-0">
                       <div 
                         onClick={() => document.getElementById('photo-upload-input').click()}
-                        className="w-[120px] h-[120px] rounded-full bg-slate-100 border-2 border-dashed border-outline-variant hover:border-primary flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all relative group shadow-inner"
+                        className="w-24 h-24 rounded-2xl bg-surface border-2 border-dashed border-outline-variant hover:border-primary flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all shadow-xs group"
                       >
                         {photoPreviewUrl || formData.foto_url ? (
                           <img 
@@ -809,13 +887,14 @@ export const Beneficiarios = () => {
                             className="w-full h-full object-cover" 
                           />
                         ) : (
-                          <div className="flex flex-col items-center justify-center text-outline-variant group-hover:text-primary transition-colors">
-                            <span className="material-symbols-outlined text-[36px]">photo_camera</span>
+                          <div className="flex flex-col items-center justify-center text-outline group-hover:text-primary transition-colors">
+                            <span className="material-symbols-outlined text-[32px]">add_a_photo</span>
+                            <span className="text-[10px] font-bold mt-1">Foto</span>
                           </div>
                         )}
                         
                         {/* Hover Overlay */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-wider">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-wider rounded-2xl">
                           Alterar
                         </div>
                       </div>
@@ -825,172 +904,376 @@ export const Beneficiarios = () => {
                         <button
                           type="button"
                           onClick={handleRemovePhoto}
-                          className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center shadow-md hover:bg-error-container hover:text-on-error-container transition-colors z-10"
+                          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-error text-on-error flex items-center justify-center shadow-md hover:scale-105 transition-all z-10"
                           title="Remover Foto"
                         >
                           <span className="material-symbols-outlined text-[14px] font-bold">close</span>
                         </button>
                       )}
                     </div>
-                    
-                    <p className="text-[10px] text-outline mt-2 text-center sm:text-left">
-                      Clique para adicionar foto. Formatos: JPG, JPEG, PNG, WEBP. Máx. 5MB.
-                    </p>
-                    
-                    <input
-                      id="photo-upload-input"
-                      type="file"
-                      accept="image/jpeg, image/jpg, image/png, image/webp"
-                      className="hidden"
-                      onChange={handlePhotoFileChange}
-                    />
+
+                    <div className="flex-1 text-center sm:text-left">
+                      <h4 className="text-xs font-bold text-on-surface">Foto de Identificação</h4>
+                      <p className="text-[11px] text-outline mt-0.5">
+                        Adicione uma foto de rosto para identificação rápida na entrega de donativos. Formatos: JPG, PNG, WEBP (Máx. 5MB).
+                      </p>
+                      <div className="flex items-center gap-2 mt-3 justify-center sm:justify-start">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('photo-upload-input').click()}
+                          className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
+                        >
+                          <span className="material-symbols-outlined text-[15px]">upload</span>
+                          <span>Escolher Imagem</span>
+                        </button>
+                        {(photoPreviewUrl || formData.foto_url) && (
+                          <button
+                            type="button"
+                            onClick={handleRemovePhoto}
+                            className="px-3 py-1.5 text-error hover:bg-error-container/20 rounded-xl text-xs font-bold transition-colors"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        id="photo-upload-input"
+                        type="file"
+                        accept="image/jpeg, image/jpg, image/png, image/webp"
+                        className="hidden"
+                        onChange={handlePhotoFileChange}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* SECTION: CONTATO E ENDEREÇO */}
               {formSection === 'contato' && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Telefone</label>
-                    <input name="telefone" value={formData.telefone} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">WhatsApp</label>
-                    <input name="whatsapp" value={formData.whatsapp} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">E-mail</label>
-                    <input name="email" value={formData.email} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="email" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">CEP (Auto-preenchimento)</label>
-                    <div className="relative">
-                      <input 
-                        name="cep" 
-                        value={formData.cep} 
-                        onChange={handleInputChange} 
-                        onBlur={handleCepBlur}
-                        placeholder="00000-000"
-                        className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" 
-                        type="text" 
-                      />
+                <div className="space-y-4.5 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4.5">
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Telefone Principal</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">call</span>
+                        <input 
+                          name="telefone" 
+                          value={formData.telefone} 
+                          onChange={handleInputChange} 
+                          placeholder="(00) 0000-0000" 
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">WhatsApp / Celular</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 text-[18px]">chat</span>
+                        <input 
+                          name="whatsapp" 
+                          value={formData.whatsapp} 
+                          onChange={handleInputChange} 
+                          placeholder="(00) 90000-0000" 
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">E-mail (opcional)</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">mail</span>
+                        <input 
+                          name="email" 
+                          value={formData.email} 
+                          onChange={handleInputChange} 
+                          placeholder="email@exemplo.com" 
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="email" 
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-label-sm font-semibold mb-1">Rua</label>
-                    <input name="rua" value={formData.rua} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Número</label>
-                    <input name="numero" value={formData.numero} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Complemento</label>
-                    <input name="complemento" value={formData.complemento} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Bairro</label>
-                    <input name="bairro" value={formData.bairro} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Cidade</label>
-                    <input name="cidade" value={formData.cidade} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Estado</label>
-                    <input name="estado" value={formData.estado} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" />
+
+                  <div className="p-4 bg-surface-container-low rounded-2xl border border-outline-variant/70 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-primary flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[18px]">home</span>
+                        Endereço Residencial
+                      </h4>
+                      <span className="text-[11px] font-semibold text-outline">
+                        Preenchimento automático por CEP
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">CEP</label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
+                          <input 
+                            name="cep" 
+                            value={formData.cep} 
+                            onChange={handleInputChange} 
+                            onBlur={handleCepBlur}
+                            placeholder="00000-000"
+                            className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                            type="text" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Logradouro (Rua, Avenida)</label>
+                        <input 
+                          name="rua" 
+                          value={formData.rua} 
+                          onChange={handleInputChange} 
+                          placeholder="Rua das Flores" 
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Número</label>
+                        <input 
+                          name="numero" 
+                          value={formData.numero} 
+                          onChange={handleInputChange} 
+                          placeholder="123 ou S/N" 
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Complemento</label>
+                        <input 
+                          name="complemento" 
+                          value={formData.complemento} 
+                          onChange={handleInputChange} 
+                          placeholder="Apto 101, Bloco B, Casa dos Fundos" 
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Bairro</label>
+                        <input 
+                          name="bairro" 
+                          value={formData.bairro} 
+                          onChange={handleInputChange} 
+                          placeholder="Centro" 
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Cidade</label>
+                        <input 
+                          name="cidade" 
+                          value={formData.cidade} 
+                          onChange={handleInputChange} 
+                          placeholder="Nome da Cidade" 
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-on-surface mb-1.5">Estado (UF)</label>
+                        <input 
+                          name="estado" 
+                          value={formData.estado} 
+                          onChange={handleInputChange} 
+                          placeholder="SP" 
+                          maxLength={2}
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant/80 rounded-xl text-xs font-bold uppercase text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="text" 
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* SECTION: SÓCIO-ECONÔMICO */}
               {formSection === 'socio' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Renda Familiar Mensal (R$)</label>
-                    <input name="renda_familiar" value={formData.renda_familiar} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="number" step="0.01" />
-                  </div>
-                  <div>
-                    <label className="block text-label-sm font-semibold mb-1">Tipo de Moradia</label>
-                    <select name="tipo_moradia" value={formData.tipo_moradia} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none">
-                      <option value="Alugada">Alugada</option>
-                      <option value="Própria">Própria</option>
-                      <option value="Cedida">Cedida</option>
-                      <option value="Ocupação / Sem-Teto">Ocupação / Sem-Teto</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="flex items-center gap-2 font-semibold text-body-sm mt-4 select-none cursor-pointer">
-                      <input name="outros_beneficios" checked={formData.outros_beneficios} onChange={handleInputChange} type="checkbox" className="rounded text-primary focus:ring-0 w-4 h-4 border-outline-variant" />
-                      Recebe outros benefícios sociais governamentais?
-                    </label>
-                  </div>
-                  {formData.outros_beneficios && (
-                    <div className="md:col-span-2">
-                      <label className="block text-label-sm font-semibold mb-1">Quais benefícios e valores?</label>
-                      <input name="quais_beneficios" value={formData.quais_beneficios} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none" type="text" placeholder="Bolsa Família, BPC, etc." />
+                <div className="space-y-4.5 animate-in fade-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">
+                        Renda Familiar Mensal Estimada
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-primary">R$</span>
+                        <input 
+                          name="renda_familiar" 
+                          value={formData.renda_familiar} 
+                          onChange={handleInputChange} 
+                          placeholder="0,00"
+                          className="w-full pl-9.5 pr-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-bold text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs" 
+                          type="number" 
+                          step="0.01" 
+                        />
+                      </div>
                     </div>
-                  )}
-                  <div className="md:col-span-2">
-                    <label className="block text-label-sm font-semibold mb-1">Observações Gerais</label>
-                    <textarea name="observacoes" value={formData.observacoes} onChange={handleInputChange} className="w-full border border-outline-variant rounded-lg px-3 py-2 bg-surface focus:border-primary focus:ring-0 outline-none h-24" />
+
+                    <div>
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Tipo de Moradia</label>
+                      <select 
+                        name="tipo_moradia" 
+                        value={formData.tipo_moradia} 
+                        onChange={handleInputChange} 
+                        className="w-full px-3.5 py-2.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-semibold text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all shadow-xs cursor-pointer"
+                      >
+                        <option value="Alugada">Alugada</option>
+                        <option value="Própria">Própria</option>
+                        <option value="Cedida">Cedida / Favor</option>
+                        <option value="Ocupação / Sem-Teto">Ocupação / Sem-Teto</option>
+                      </select>
+                    </div>
+
+                    <div className="md:col-span-2 p-4 bg-surface-container-low rounded-2xl border border-outline-variant/70">
+                      <label className="flex items-center gap-3 font-bold text-xs text-on-surface select-none cursor-pointer">
+                        <input 
+                          name="outros_beneficios" 
+                          checked={formData.outros_beneficios} 
+                          onChange={handleInputChange} 
+                          type="checkbox" 
+                          className="rounded-lg text-primary focus:ring-0 w-4.5 h-4.5 border-outline-variant cursor-pointer" 
+                        />
+                        <span>A família recebe outros benefícios governamentais (Bolsa Família, BPC, Auxílio Gás, etc.)?</span>
+                      </label>
+
+                      {formData.outros_beneficios && (
+                        <div className="mt-3.5 pt-3 border-t border-outline-variant/60">
+                          <label className="block text-xs font-bold text-on-surface mb-1.5">Quais benefícios e valores?</label>
+                          <input 
+                            name="quais_beneficios" 
+                            value={formData.quais_beneficios} 
+                            onChange={handleInputChange} 
+                            className="w-full px-3.5 py-2 bg-surface border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-0 outline-none" 
+                            type="text" 
+                            placeholder="Ex: Bolsa Família (R$ 600,00) e Auxílio Gás" 
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-xs font-bold text-on-surface mb-1.5">Observações Gerais / Histórico Social</label>
+                      <textarea 
+                        name="observacoes" 
+                        value={formData.observacoes} 
+                        onChange={handleInputChange} 
+                        placeholder="Relato de situação de vulnerabilidade, necessidades especiais, remédios de uso contínuo..." 
+                        className="w-full p-3.5 bg-surface-container-low border border-outline-variant/80 rounded-xl text-xs font-medium text-on-surface placeholder:text-outline/70 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none h-24 transition-all shadow-xs resize-none" 
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* SECTION: COMPOSIÇÃO FAMILIAR & BENEFÍCIOS */}
               {formSection === 'familia' && (
-                <div className="space-y-6">
-                  {/* Composição Familiar */}
-                  <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/60">
-                    <h4 className="font-semibold text-primary mb-3">Composição Familiar (Membros do Domicílio)</h4>
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  {/* Composição Familiar Card */}
+                  <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/70 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[20px]">groups</span>
+                        Membros que residem no mesmo domicílio
+                      </h4>
+                      <span className="text-[11px] font-semibold text-outline">
+                        {membrosFamilia.length} dependente(s)
+                      </span>
+                    </div>
                     
-                    {/* Add new member form row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end mb-4">
+                    {/* Add new member inputs */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 bg-surface rounded-xl border border-outline-variant/60 items-end">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-on-surface-variant">Nome Completo</label>
-                        <input value={newMembro.nome} onChange={(e) => setNewMembro(prev => ({ ...prev, nome: e.target.value }))} className="w-full border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-body-sm focus:border-primary focus:ring-0" type="text" />
+                        <label className="block text-[11px] font-bold mb-1 text-on-surface-variant">Nome do Dependente</label>
+                        <input 
+                          value={newMembro.nome} 
+                          onChange={(e) => setNewMembro(prev => ({ ...prev, nome: e.target.value }))} 
+                          placeholder="Nome completo"
+                          className="w-full border border-outline-variant/80 rounded-lg px-3 py-2 bg-surface-container-lowest text-xs font-medium focus:border-primary outline-none" 
+                          type="text" 
+                        />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-on-surface-variant">Parentesco</label>
-                        <input value={newMembro.parentesco} onChange={(e) => setNewMembro(prev => ({ ...prev, parentesco: e.target.value }))} className="w-full border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-body-sm focus:border-primary focus:ring-0" type="text" placeholder="Filho, Cônjuge, etc." />
+                        <label className="block text-[11px] font-bold mb-1 text-on-surface-variant">Parentesco</label>
+                        <input 
+                          value={newMembro.parentesco} 
+                          onChange={(e) => setNewMembro(prev => ({ ...prev, parentesco: e.target.value }))} 
+                          placeholder="Filho(a), Cônjuge, Neto..."
+                          className="w-full border border-outline-variant/80 rounded-lg px-3 py-2 bg-surface-container-lowest text-xs font-medium focus:border-primary outline-none" 
+                          type="text" 
+                        />
                       </div>
                       <div className="flex gap-2 items-end">
                         <div className="flex-1">
-                          <label className="block text-xs font-semibold mb-1 text-on-surface-variant">Idade</label>
-                          <input value={newMembro.idade} onChange={(e) => setNewMembro(prev => ({ ...prev, idade: e.target.value }))} className="w-full border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-body-sm focus:border-primary focus:ring-0" type="number" />
+                          <label className="block text-[11px] font-bold mb-1 text-on-surface-variant">Idade (anos)</label>
+                          <input 
+                            value={newMembro.idade} 
+                            onChange={(e) => setNewMembro(prev => ({ ...prev, idade: e.target.value }))} 
+                            placeholder="Idade"
+                            className="w-full border border-outline-variant/80 rounded-lg px-3 py-2 bg-surface-container-lowest text-xs font-medium focus:border-primary outline-none" 
+                            type="number" 
+                          />
                         </div>
-                        <button type="button" onClick={addMembro} className="bg-primary text-on-primary px-3 py-2 rounded-lg font-bold text-body-sm transition-all hover:bg-primary-container shrink-0">
-                          Adicionar
+                        <button 
+                          type="button" 
+                          onClick={addMembro} 
+                          className="bg-primary text-on-primary hover:bg-primary-container px-3.5 py-2 rounded-lg font-bold text-xs transition-all shrink-0 flex items-center gap-1 shadow-xs"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">add</span>
+                          <span>Adicionar</span>
                         </button>
                       </div>
                     </div>
 
-                    {/* Member List Table */}
-                    <div className="overflow-hidden border border-outline-variant rounded-lg bg-surface">
+                    {/* Member List */}
+                    <div className="overflow-hidden border border-outline-variant/70 rounded-xl bg-surface">
                       <table className="w-full text-left">
-                        <thead className="bg-surface-container-low text-xs font-semibold text-on-surface-variant border-b border-surface-variant">
+                        <thead className="bg-surface-container-low text-[11px] font-bold text-on-surface-variant border-b border-outline-variant/60 uppercase tracking-wider">
                           <tr>
-                            <th className="px-4 py-2">Nome</th>
-                            <th className="px-4 py-2">Parentesco</th>
-                            <th className="px-4 py-2">Idade</th>
-                            <th className="px-4 py-2 text-right">Ações</th>
+                            <th className="px-4 py-2.5">Nome do Membro</th>
+                            <th className="px-4 py-2.5">Parentesco</th>
+                            <th className="px-4 py-2.5">Idade</th>
+                            <th className="px-4 py-2.5 text-right">Ação</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-surface-variant text-body-sm">
+                        <tbody className="divide-y divide-outline-variant/40 text-xs">
                           {membrosFamilia.length === 0 ? (
                             <tr>
-                              <td colSpan="4" className="px-4 py-3 text-center text-on-surface-variant text-xs">Nenhum membro familiar adicionado.</td>
+                              <td colSpan="4" className="px-4 py-4 text-center text-outline font-semibold">
+                                Nenhum membro familiar cadastrado ainda.
+                              </td>
                             </tr>
                           ) : (
                             membrosFamilia.map((m, idx) => (
-                              <tr key={idx}>
-                                <td className="px-4 py-2 font-medium">{m.nome}</td>
-                                <td className="px-4 py-2 text-on-surface-variant">{m.parentesco}</td>
-                                <td className="px-4 py-2">{m.idade} anos</td>
-                                <td className="px-4 py-2 text-right">
-                                  <button type="button" onClick={() => removeMembro(idx)} className="p-1 text-error hover:bg-error-container/20 rounded-md">
+                              <tr key={idx} className="hover:bg-surface-container-lowest">
+                                <td className="px-4 py-2.5 font-bold text-on-surface flex items-center gap-2">
+                                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-extrabold flex items-center justify-center">
+                                    {m.nome?.[0] || 'M'}
+                                  </span>
+                                  <span>{m.nome}</span>
+                                </td>
+                                <td className="px-4 py-2.5 text-on-surface-variant font-medium">{m.parentesco}</td>
+                                <td className="px-4 py-2.5 font-bold">{m.idade} anos</td>
+                                <td className="px-4 py-2.5 text-right">
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeMembro(idx)} 
+                                    className="p-1 text-error hover:bg-error-container/20 rounded-md transition-colors"
+                                    title="Remover membro"
+                                  >
                                     <span className="material-symbols-outlined text-[18px]">delete</span>
                                   </button>
                                 </td>
@@ -1003,9 +1286,15 @@ export const Beneficiarios = () => {
                   </div>
 
                   {/* Benefícios Recebidos */}
-                  <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/60">
-                    <h4 className="font-semibold text-primary mb-3">Benefícios Internos Solicitados/Recebidos</h4>
-                    <div className="flex flex-wrap gap-3">
+                  <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/70 space-y-3">
+                    <h4 className="font-bold text-xs text-primary flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[20px]">volunteer_activism</span>
+                      Benefícios Pastorais Solicitados / Vinculados
+                    </h4>
+                    <p className="text-[11px] text-outline">
+                      Selecione quais apoios essa família já tem autorização ou necessidade prioritária:
+                    </p>
+                    <div className="flex flex-wrap gap-2.5 pt-1">
                       {['Cesta Básica', 'Medicamentos', 'Auxílio Gás', 'Apoio Psicológico', 'Enxoval de Bebê', 'Cursos Livres'].map(b => {
                         const isSelected = beneficios.includes(b)
                         return (
@@ -1013,13 +1302,16 @@ export const Beneficiarios = () => {
                             key={b}
                             type="button"
                             onClick={() => toggleBeneficio(b)}
-                            className={`px-4 py-2 rounded-full border text-body-sm font-semibold transition-all select-none ${
+                            className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all flex items-center gap-2 select-none ${
                               isSelected 
-                                ? 'bg-primary border-primary text-on-primary shadow-sm' 
-                                : 'bg-surface border-outline-variant text-on-surface-variant hover:text-on-surface'
+                                ? 'bg-primary border-primary text-on-primary shadow-xs' 
+                                : 'bg-surface border-outline-variant/80 text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
                             }`}
                           >
-                            {b}
+                            <span className="material-symbols-outlined text-[16px]">
+                              {isSelected ? 'check_circle' : 'add_circle'}
+                            </span>
+                            <span>{b}</span>
                           </button>
                         )
                       })}
@@ -1030,54 +1322,88 @@ export const Beneficiarios = () => {
 
               {/* SECTION: DOCUMENTOS */}
               {formSection === 'documentos' && (
-                <div className="space-y-6">
-                  <div className="bg-surface-container-low rounded-xl p-4 border border-outline-variant/60">
-                    <h4 className="font-semibold text-primary mb-3">Anexar Documentação do Beneficiário</h4>
+                <div className="space-y-5 animate-in fade-in duration-200">
+                  <div className="bg-surface-container-low rounded-2xl p-5 border border-outline-variant/70 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-xs text-primary flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[20px]">attach_file</span>
+                        Anexar Documentação Digitalizada
+                      </h4>
+                      <span className="text-[11px] font-semibold text-outline">
+                        {documentos.length} anexo(s)
+                      </span>
+                    </div>
                     
                     {/* Add Document upload inputs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end mb-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 p-4 bg-surface rounded-xl border border-outline-variant/60 items-end">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-on-surface-variant">Nome/Tipo de Documento</label>
-                        <input value={newDocName} onChange={(e) => setNewDocName(e.target.value)} className="w-full border border-outline-variant rounded-lg px-3 py-1.5 bg-surface text-body-sm focus:border-primary" type="text" placeholder="Ex: CPF, Comprovante de Residência" />
+                        <label className="block text-[11px] font-bold mb-1 text-on-surface-variant">Tipo / Nome do Documento</label>
+                        <input 
+                          value={newDocName} 
+                          onChange={(e) => setNewDocName(e.target.value)} 
+                          placeholder="Ex: RG do titular, Comprovante de Renda" 
+                          className="w-full border border-outline-variant/80 rounded-lg px-3 py-2 bg-surface-container-lowest text-xs font-medium focus:border-primary outline-none" 
+                          type="text" 
+                        />
                       </div>
                       <div className="flex gap-2 items-end">
                         <div className="flex-1">
-                          <label className="block text-xs font-semibold mb-1 text-on-surface-variant">Arquivo</label>
-                          <input type="file" onChange={(e) => setNewDocFile(e.target.files?.[0] || null)} className="w-full text-xs file:mr-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-primary/10 file:text-primary" />
+                          <label className="block text-[11px] font-bold mb-1 text-on-surface-variant">Arquivo (PDF, Imagem)</label>
+                          <input 
+                            type="file" 
+                            onChange={(e) => setNewDocFile(e.target.files?.[0] || null)} 
+                            className="w-full text-xs file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-primary/10 file:text-primary file:font-bold file:cursor-pointer" 
+                          />
                         </div>
-                        <button type="button" onClick={addDoc} disabled={saving} className="bg-primary text-on-primary px-3 py-2 rounded-lg font-bold text-body-sm transition-all hover:bg-primary-container shrink-0 disabled:opacity-50">
-                          {saving ? 'Enviando...' : 'Anexar'}
+                        <button 
+                          type="button" 
+                          onClick={addDoc} 
+                          disabled={saving} 
+                          className="bg-primary text-on-primary hover:bg-primary-container px-4 py-2 rounded-lg font-bold text-xs transition-all shrink-0 flex items-center gap-1.5 disabled:opacity-50 shadow-xs"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                          <span>{saving ? 'Enviando...' : 'Anexar'}</span>
                         </button>
                       </div>
                     </div>
 
                     {/* Documents List */}
-                    <div className="overflow-hidden border border-outline-variant rounded-lg bg-surface">
+                    <div className="overflow-hidden border border-outline-variant/70 rounded-xl bg-surface">
                       <table className="w-full text-left">
-                        <thead className="bg-surface-container-low text-xs font-semibold text-on-surface-variant border-b border-surface-variant">
+                        <thead className="bg-surface-container-low text-[11px] font-bold text-on-surface-variant border-b border-outline-variant/60 uppercase tracking-wider">
                           <tr>
-                            <th className="px-4 py-2">Documento</th>
-                            <th className="px-4 py-2">Link de Acesso</th>
-                            <th className="px-4 py-2 text-right">Ações</th>
+                            <th className="px-4 py-2.5">Nome do Documento</th>
+                            <th className="px-4 py-2.5">Acesso ao Arquivo</th>
+                            <th className="px-4 py-2.5 text-right">Ações</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-surface-variant text-body-sm">
+                        <tbody className="divide-y divide-outline-variant/40 text-xs">
                           {documentos.length === 0 ? (
                             <tr>
-                              <td colSpan="3" className="px-4 py-3 text-center text-on-surface-variant text-xs">Nenhum documento anexado.</td>
+                              <td colSpan="3" className="px-4 py-4 text-center text-outline font-semibold">
+                                Nenhum documento anexado ainda.
+                              </td>
                             </tr>
                           ) : (
                             documentos.map((d, idx) => (
-                              <tr key={idx}>
-                                <td className="px-4 py-2 font-medium">{d.nome}</td>
-                                <td className="px-4 py-2 text-primary font-semibold">
-                                  <a href={d.url} target="_blank" rel="noopener noreferrer" className="hover:underline flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[16px]">open_in_new</span>
-                                    Visualizar Arquivo
+                              <tr key={idx} className="hover:bg-surface-container-lowest">
+                                <td className="px-4 py-2.5 font-bold text-on-surface flex items-center gap-2">
+                                  <span className="material-symbols-outlined text-primary text-[18px]">description</span>
+                                  <span>{d.nome}</span>
+                                </td>
+                                <td className="px-4 py-2.5 text-primary font-bold">
+                                  <a href={d.url} target="_blank" rel="noopener noreferrer" className="hover:underline inline-flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[15px]">open_in_new</span>
+                                    <span>Visualizar</span>
                                   </a>
                                 </td>
-                                <td className="px-4 py-2 text-right">
-                                  <button type="button" onClick={() => removeDoc(idx)} className="p-1 text-error hover:bg-error-container/20 rounded-md">
+                                <td className="px-4 py-2.5 text-right">
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeDoc(idx)} 
+                                    className="p-1 text-error hover:bg-error-container/20 rounded-md transition-colors"
+                                    title="Remover documento"
+                                  >
                                     <span className="material-symbols-outlined text-[18px]">delete</span>
                                   </button>
                                 </td>
@@ -1092,15 +1418,16 @@ export const Beneficiarios = () => {
               )}
 
               {/* Form Action Footer */}
-              <div className="pt-6 border-t border-surface-variant flex justify-between gap-4 shrink-0">
+              <div className="pt-5 border-t border-outline-variant/60 flex items-center justify-between gap-3 shrink-0">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="px-6 py-3 border border-outline-variant text-on-surface hover:bg-surface-container rounded-lg font-semibold text-body-sm transition-colors"
+                  className="px-5 py-2.5 border border-outline-variant/80 text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs transition-colors"
                 >
                   Cancelar
                 </button>
-                <div className="flex gap-2">
+
+                <div className="flex items-center gap-2">
                   {formSection !== 'pessoais' && (
                     <button
                       type="button"
@@ -1109,11 +1436,13 @@ export const Beneficiarios = () => {
                         const curIdx = sections.indexOf(formSection)
                         setFormSection(sections[curIdx - 1])
                       }}
-                      className="px-6 py-3 border border-outline-variant text-on-surface hover:bg-surface-container rounded-lg font-semibold text-body-sm"
+                      className="px-5 py-2.5 border border-outline-variant/80 text-on-surface hover:bg-surface-container rounded-xl font-bold text-xs transition-colors flex items-center gap-1"
                     >
-                      Voltar
+                      <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+                      <span>Voltar</span>
                     </button>
                   )}
+
                   {formSection !== 'documentos' ? (
                     <button
                       type="button"
@@ -1122,17 +1451,19 @@ export const Beneficiarios = () => {
                         const curIdx = sections.indexOf(formSection)
                         setFormSection(sections[curIdx + 1])
                       }}
-                      className="px-6 py-3 bg-secondary text-on-secondary hover:bg-secondary-container hover:text-on-secondary-container rounded-lg font-semibold text-body-sm"
+                      className="px-6 py-2.5 bg-primary text-on-primary hover:bg-primary-container rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shadow-xs"
                     >
-                      Avançar
+                      <span>Avançar</span>
+                      <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                     </button>
                   ) : (
                     <button
                       type="submit"
                       disabled={saving}
-                      className="px-6 py-3 bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container rounded-lg font-semibold text-body-sm shadow-sm disabled:opacity-50"
+                      className="px-7 py-2.5 bg-primary text-on-primary hover:bg-primary-container rounded-xl font-bold text-xs transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
                     >
-                      {saving ? 'Salvando...' : 'Salvar Cadastro'}
+                      <span className="material-symbols-outlined text-[18px]">check</span>
+                      <span>{saving ? 'Salvando...' : 'Salvar Cadastro'}</span>
                     </button>
                   )}
                 </div>
