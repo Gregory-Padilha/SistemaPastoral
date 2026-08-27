@@ -349,9 +349,18 @@ export const fetchDashboardData = async () => {
   const monthlySummary = {}
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const label = d.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' })
+    const monthShort = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').trim()
+    const monthFormatted = monthShort.charAt(0).toUpperCase() + monthShort.slice(1)
+    const fullMonth = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    monthlySummary[key] = { label, entradas: 0, saidas: 0 }
+    monthlySummary[key] = { 
+      key,
+      label: monthFormatted, 
+      ano: d.getFullYear(),
+      mesCompleto: fullMonth.charAt(0).toUpperCase() + fullMonth.slice(1),
+      entradas: 0, 
+      saidas: 0 
+    }
   }
 
   try {
@@ -379,9 +388,13 @@ export const fetchDashboardData = async () => {
   const historicoGrafico = Object.keys(monthlySummary)
     .sort()
     .map(key => ({
+      key: monthlySummary[key].key,
       mes: monthlySummary[key].label,
+      ano: monthlySummary[key].ano,
+      mesCompleto: monthlySummary[key].mesCompleto,
       entradas: monthlySummary[key].entradas,
-      saidas: monthlySummary[key].saidas
+      saidas: monthlySummary[key].saidas,
+      saldo: monthlySummary[key].entradas - monthlySummary[key].saidas
     }))
 
   let beneficiariosRecentes = []
