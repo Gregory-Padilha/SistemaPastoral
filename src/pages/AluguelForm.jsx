@@ -11,6 +11,7 @@ import {
 import { useFeedback } from '../contexts/FeedbackContext'
 import { mapSupabaseError } from '../lib/errorMapper'
 import { maskCPF, maskPhone, validateCPF } from '../utils/masks'
+import { jsPDF } from 'jspdf'
 
 const createNewItem = (preset = {}) => ({
   id: 'item-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
@@ -44,7 +45,12 @@ export const AluguelForm = () => {
     valor_aluguel: '0', data_inicio: new Date().toISOString().split('T')[0], data_fim: '',
     dia_vencimento: '1', forma_pagamento: 'Doação',
     clausulas_especiais: '', observacoes: '', status: 'Ativo',
-    equipamento_id: ''
+    equipamento_id: '',
+    valor_caucao: '0',
+    caucao_pago: true,
+    forma_pagamento_caucao: 'PIX',
+    data_caucao: new Date().toISOString().split('T')[0],
+    caucao_observacoes: ''
   })
 
   // Stock and Beneficiaries
@@ -63,9 +69,10 @@ export const AluguelForm = () => {
     status: 'Pago'
   })
 
-  // Receipt visual state
+  // Receipt visual states
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [selectedReceiptPayment, setSelectedReceiptPayment] = useState(null)
+  const [caucaoReceiptOpen, setCaucaoReceiptOpen] = useState(false)
 
   const loadInitialData = async () => {
     try {
@@ -101,7 +108,12 @@ export const AluguelForm = () => {
         clausulas_especiais: data.clausulas_especiais || '',
         observacoes: data.observacoes || '',
         status: data.status || 'Ativo',
-        equipamento_id: data.equipamento_id || ''
+        equipamento_id: data.equipamento_id || '',
+        valor_caucao: data.valor_caucao !== undefined && data.valor_caucao !== null ? data.valor_caucao.toString() : '0',
+        caucao_pago: data.caucao_pago !== undefined ? !!data.caucao_pago : false,
+        forma_pagamento_caucao: data.forma_pagamento_caucao || data.forma_pagamento || 'PIX',
+        data_caucao: data.data_caucao || data.data_inicio || new Date().toISOString().split('T')[0],
+        caucao_observacoes: data.caucao_observacoes || ''
       })
 
       // Load items
@@ -227,13 +239,32 @@ export const AluguelForm = () => {
             current.numero_serie = selected.numero_serie || ''
             
             // Auto detect item type
-            const nameLower = selected.nome_equipamento.toLowerCase()
-            if (nameLower.includes('cadeira') && nameLower.includes('roda')) current.imovel_tipo = 'Cadeira de Rodas'
-            else if (nameLower.includes('muleta')) current.imovel_tipo = 'Muletas'
-            else if (nameLower.includes('andador')) current.imovel_tipo = 'Andador'
-            else if (nameLower.includes('cama')) current.imovel_tipo = 'Cama Hospitalar'
-            else if (nameLower.includes('mesa') || nameLower.includes('cadeira')) current.imovel_tipo = 'Cadeiras / Mesas'
-            else if (nameLower.includes('som') || nameLower.includes('ilumina')) current.imovel_tipo = 'Som / Iluminação'
+            if (selected.categoria) {
+              current.imovel_tipo = selected.categoria
+            } else {
+              const nameLower = selected.nome_equipamento.toLowerCase()
+              if (nameLower.includes('cadeira') && nameLower.includes('roda')) current.imovel_tipo = 'Cadeira de Rodas'
+              else if (nameLower.includes('muleta')) current.imovel_tipo = 'Muletas'
+              else if (nameLower.includes('andador')) current.imovel_tipo = 'Andador'
+              else if (nameLower.includes('cama')) current.imovel_tipo = 'Cama Hospitalar'
+              else if (nameLower.includes('mesa') || nameLower.includes('cadeira')) current.imovel_tipo = 'Cadeiras / Mesas'
+              else if (nameLower.includes('som') || nameLower.includes('ilumina')) current.imovel_tipo = 'Som / Iluminação'
+            }
+
+            // Auto fill suggested fee if available
+            if (parseFloat(selected.valor_aluguel_sugerido || 0) > 0 && (!current.valor_unitario || current.valor_unitario === '0')) {
+              current.valor_unitario = selected.valor_aluguel_sugerido.toString()
+            }
+
+            // Auto suggest caução if empty
+            if (parseFloat(selected.valor_caucao_sugerido || 0) > 0) {
+              setFormData(prev => {
+                if (!prev.valor_caucao || prev.valor_caucao === '0' || prev.valor_caucao === '0.00') {
+                  return { ...prev, valor_caucao: selected.valor_caucao_sugerido.toString() }
+                }
+                return prev
+              })
+            }
           }
         }
       } else if (field === 'quantidade') {
@@ -331,7 +362,12 @@ export const AluguelForm = () => {
         dia_vencimento: parseInt(formData.dia_vencimento || '1'),
         data_inicio: formData.data_inicio || null,
         data_fim: formData.data_fim || null,
-        itens: itens
+        itens: itens,
+        valor_caucao: parseFloat(formData.valor_caucao || '0'),
+        caucao_pago: formData.caucao_pago,
+        forma_pagamento_caucao: formData.forma_pagamento_caucao || 'PIX',
+        data_caucao: formData.data_caucao || formData.data_inicio || new Date().toISOString().split('T')[0],
+        caucao_observacoes: formData.caucao_observacoes || ''
       }
 
       if (isEdit) {
@@ -439,6 +475,127 @@ export const AluguelForm = () => {
   const handleOpenReceipt = (payment) => {
     setSelectedReceiptPayment(payment)
     setReceiptOpen(true)
+  }
+
+  const handleDownloadCaucaoPDF = () => {
+    try {
+      const doc = new jsPDF()
+      const instName = 'SISTEMA PASTORAL'
+      const numRecibo = (id || 'NOVO').substring(0, 8).toUpperCase()
+      const valorFormatado = formatCurrency(parseFloat(formData.valor_caucao || '0'))
+      const valorExtenso = numberToWords(parseFloat(formData.valor_caucao || '0'))
+      const dataFormatada = formData.data_caucao ? new Date(formData.data_caucao).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')
+
+      // Amber header banner
+      doc.setFillColor(180, 83, 9)
+      doc.rect(0, 0, 210, 32, 'F')
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(15)
+      doc.setTextColor(255, 255, 255)
+      doc.text(instName, 14, 15)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(254, 243, 199)
+      doc.text('Filantropia & Gestão Inteligente', 14, 22)
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(13)
+      doc.setTextColor(255, 255, 255)
+      doc.text('RECIBO DE CAUÇÃO DE GARANTIA', 196, 15, { align: 'right' })
+      doc.setFontSize(9)
+      doc.text(`Nº: CAUCAO-${numRecibo}`, 196, 23, { align: 'right' })
+
+      // Amount Box
+      doc.setFillColor(254, 243, 199)
+      doc.setDrawColor(217, 119, 6)
+      doc.setLineWidth(0.5)
+      doc.roundedRect(14, 40, 182, 20, 2, 2, 'FD')
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(10)
+      doc.setTextColor(180, 83, 9)
+      doc.text('VALOR DO CAUÇÃO RECEBIDO:', 20, 48)
+
+      doc.setFontSize(16)
+      doc.text(valorFormatado, 190, 53, { align: 'right' })
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor(80, 80, 80)
+      doc.text(`Forma de Pagamento: ${formData.forma_pagamento_caucao || 'PIX'}`, 20, 55)
+
+      // Body text
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(10)
+      doc.setTextColor(30, 30, 30)
+
+      const bodyText = `Recebemos de ${formData.locatario_nome || 'Beneficiário'}, CPF: ${formData.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${formData.forma_pagamento_caucao || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos:`
+      const splitBody = doc.splitTextToSize(bodyText, 182)
+      doc.text(splitBody, 14, 68)
+
+      let tableY = 68 + (splitBody.length * 5) + 4
+
+      // List of items
+      doc.setFillColor(245, 245, 245)
+      doc.rect(14, tableY, 182, 7, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(50, 50, 50)
+      doc.text('Equipamento / Objeto', 18, tableY + 5)
+      doc.text('S/N', 110, tableY + 5)
+      doc.text('Qtd', 145, tableY + 5)
+      doc.text('Estado', 165, tableY + 5)
+
+      tableY += 8
+      doc.setFont('helvetica', 'normal')
+      itens.forEach((it, i) => {
+        doc.text(it.nome_equipamento || 'Equipamento', 18, tableY + (i * 6))
+        doc.text(it.numero_serie || '---', 110, tableY + (i * 6))
+        doc.text((it.quantidade || 1).toString(), 145, tableY + (i * 6))
+        doc.text(it.descricao || 'Bom', 165, tableY + (i * 6))
+      })
+
+      tableY += (itens.length * 6) + 8
+
+      // Conditions box
+      doc.setFillColor(250, 250, 250)
+      doc.setDrawColor(220, 220, 220)
+      doc.roundedRect(14, tableY, 182, 28, 2, 2, 'FD')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8.5)
+      doc.setTextColor(180, 83, 9)
+      doc.text('Termos e Condições de Devolução do Caução:', 18, tableY + 6)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(80, 80, 80)
+      const terms = 'O valor do caução permanecerá sob custódia da instituição durante o empréstimo e será restituído integralmente ao beneficiário/locatário no momento da devolução dos equipamentos na sede da pastoral, desde que entregues limpos, sem avarias e em perfeito estado de funcionamento e conservação.'
+      const splitTerms = doc.splitTextToSize(terms, 174)
+      doc.text(splitTerms, 18, tableY + 12)
+
+      // Signatures
+      const sigY = tableY + 44
+      doc.line(20, sigY, 90, sigY)
+      doc.line(120, sigY, 190, sigY)
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(30, 30, 30)
+      doc.text(formData.locatario_nome || 'Locatário', 55, sigY + 5, { align: 'center' })
+      doc.text('Representante da Pastoral', 155, sigY + 5, { align: 'center' })
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7.5)
+      doc.setTextColor(100, 100, 100)
+      doc.text('Locatário / Beneficiário', 55, sigY + 9, { align: 'center' })
+      doc.text('Responsável pelo Recebimento', 155, sigY + 9, { align: 'center' })
+
+      doc.save(`recibo-caucao-${formData.locatario_nome ? formData.locatario_nome.toLowerCase().replace(/\s+/g, '-') : 'locatario'}.pdf`)
+      showToast('Recibo Baixado', 'O arquivo PDF do recibo de caução foi gerado!', 'success')
+    } catch (err) {
+      showToast('Erro ao gerar PDF', err.message, 'error')
+    }
   }
 
   return (
@@ -577,7 +734,7 @@ export const AluguelForm = () => {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                         
                         {/* Equipamento / Estoque */}
-                        <div className="md:col-span-6 space-y-1">
+                        <div className="md:col-span-8 space-y-1">
                           <label className="block text-xs font-bold text-on-surface">
                             Equipamento / Objeto *
                           </label>
@@ -612,28 +769,8 @@ export const AluguelForm = () => {
                           )}
                         </div>
 
-                        {/* Categoria / Tipo */}
-                        <div className="md:col-span-3 space-y-1">
-                          <label className="block text-xs font-bold text-on-surface">Tipo / Categoria</label>
-                          <div className="relative">
-                            <select
-                              value={item.imovel_tipo}
-                              onChange={(e) => handleItemChange(index, 'imovel_tipo', e.target.value)}
-                              className="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                            >
-                              <option value="Cadeira de Rodas">Cadeira de Rodas</option>
-                              <option value="Muletas">Muletas</option>
-                              <option value="Andador">Andador</option>
-                              <option value="Cama Hospitalar">Cama Hospitalar</option>
-                              <option value="Cadeiras / Mesas">Cadeiras / Mesas</option>
-                              <option value="Som / Iluminação">Som / Iluminação</option>
-                              <option value="Outro">Outro</option>
-                            </select>
-                          </div>
-                        </div>
-
                         {/* Quantidade com Stepper */}
-                        <div className="md:col-span-3 space-y-1">
+                        <div className="md:col-span-4 space-y-1">
                           <label className="block text-xs font-bold text-on-surface">Quantidade *</label>
                           <div className="flex items-center border border-outline-variant rounded-xl bg-surface overflow-hidden">
                             <button
@@ -699,7 +836,7 @@ export const AluguelForm = () => {
                         <div className="md:col-span-3 space-y-1">
                           <label className="block text-xs font-bold text-on-surface">Taxa Unitária (R$)</label>
                           <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-outline font-bold text-xs">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-xs">
                               R$
                             </span>
                             <input
@@ -709,7 +846,7 @@ export const AluguelForm = () => {
                               placeholder="0,00"
                               value={item.valor_unitario}
                               onChange={(e) => handleItemChange(index, 'valor_unitario', e.target.value)}
-                              className="w-full pl-9 pr-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-bold focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                              className="w-full pl-9 pr-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-bold text-primary focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
                             />
                           </div>
                         </div>
@@ -765,11 +902,11 @@ export const AluguelForm = () => {
                   </div>
                 </div>
 
-                {/* Caixa de Valor Total */}
+                {/* Caixa de Valor Total da Taxa */}
                 <div className="bg-surface rounded-xl p-3 border border-primary/30 shadow-sm flex items-center gap-3 self-stretch sm:self-auto justify-between sm:justify-end">
                   <div className="text-right">
-                    <span className="block text-[10px] uppercase font-bold text-on-surface-variant">Valor Total / Taxa</span>
-                    <span className="text-xs text-outline font-medium">Contribuição geral</span>
+                    <span className="block text-[10px] uppercase font-bold text-on-surface-variant">Taxa de Uso / Mensal</span>
+                    <span className="text-xs text-outline font-medium">Contribuição do equipamento</span>
                   </div>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-sm">
@@ -792,7 +929,155 @@ export const AluguelForm = () => {
             </div>
 
             {/* ======================================================== */}
-            {/* SEÇÃO 2: DADOS DO LOCATÁRIO / BENEFICIÁRIO */}
+            {/* SEÇÃO 2: CAUÇÃO DE GARANTIA (DEPÓSITO DE SEGURANÇA) */}
+            {/* ======================================================== */}
+            <div className="bg-surface rounded-2xl border border-outline-variant/80 shadow-sm p-6 md:p-8 space-y-6">
+              
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-surface-variant/80 pb-4 gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-[22px]">security</span>
+                  </div>
+                  <div>
+                    <h3 className="text-primary font-bold text-lg">2. Caução de Garantia</h3>
+                    <p className="text-xs text-on-surface-variant">
+                      Depósito de garantia pago na hora do aluguel e registrado automaticamente no Caderno de Fechamento.
+                    </p>
+                  </div>
+                </div>
+
+                {parseFloat(formData.valor_caucao || '0') > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 text-xs font-bold rounded-full border ${
+                      formData.caucao_pago 
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                    }`}>
+                      {formData.caucao_pago ? '✓ Pago no Ato' : '⏳ Pendente'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                
+                {/* Valor do Caução */}
+                <div className="md:col-span-5 space-y-1">
+                  <label className="block text-xs font-bold text-on-surface">Valor do Caução (R$)</label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-700 font-bold text-sm">
+                      R$
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      name="valor_caucao"
+                      value={formData.valor_caucao}
+                      onChange={handleInputChange}
+                      placeholder="0,00"
+                      className="w-full pl-9 pr-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-bold text-amber-800 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                    />
+                  </div>
+                  {/* Botões rápidos de sugestão */}
+                  <div className="flex items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-bold text-outline uppercase mr-1">Sugerir:</span>
+                    {['0', '50', '100', '150', '200'].map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, valor_caucao: val }))}
+                        className={`px-2 py-0.5 rounded-lg text-[11px] font-semibold border transition-all ${
+                          formData.valor_caucao === val
+                            ? 'bg-primary text-on-primary border-primary'
+                            : 'bg-surface-container-low text-on-surface-variant hover:border-primary/50'
+                        }`}
+                      >
+                        {val === '0' ? 'Isento' : `R$ ${val}`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Forma de Pagamento do Caução */}
+                <div className="md:col-span-4 space-y-1">
+                  <label className="block text-xs font-bold text-on-surface">Forma de Pagamento do Caução</label>
+                  <div className="relative">
+                    <select
+                      name="forma_pagamento_caucao"
+                      value={formData.forma_pagamento_caucao}
+                      onChange={handleInputChange}
+                      disabled={parseFloat(formData.valor_caucao || '0') <= 0}
+                      className="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:opacity-50 disabled:bg-surface-container-low"
+                    >
+                      <option value="PIX">PIX</option>
+                      <option value="Dinheiro">Dinheiro</option>
+                      <option value="Transferência Bancária">Transferência Bancária</option>
+                      <option value="Cartão de Débito/Crédito">Cartão de Débito/Crédito</option>
+                      <option value="Outros">Outros</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Status de Quitação do Caução */}
+                <div className="md:col-span-3 space-y-1">
+                  <label className="block text-xs font-bold text-on-surface">Quitação do Caução</label>
+                  <select
+                    name="caucao_pago"
+                    value={formData.caucao_pago ? 'true' : 'false'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, caucao_pago: e.target.value === 'true' }))}
+                    disabled={parseFloat(formData.valor_caucao || '0') <= 0}
+                    className="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all disabled:opacity-50 disabled:bg-surface-container-low"
+                  >
+                    <option value="true">Pago no ato da retirada</option>
+                    <option value="false">Pendente / A receber</option>
+                  </select>
+                </div>
+
+                {/* Observações / Condições do Caução */}
+                <div className="md:col-span-12 space-y-1">
+                  <label className="block text-xs font-bold text-on-surface">Condições / Observações do Caução</label>
+                  <input
+                    type="text"
+                    name="caucao_observacoes"
+                    value={formData.caucao_observacoes}
+                    onChange={handleInputChange}
+                    placeholder="Ex: Valor a ser devolvido ao beneficiário após inspeção e devolução dos equipamentos em perfeito estado."
+                    className="w-full px-3 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                  />
+                </div>
+
+                {/* Card de Informação e Total no Ato */}
+                {parseFloat(formData.valor_caucao || '0') > 0 && (
+                  <div className="md:col-span-12 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-surface border border-amber-500/30 p-4 space-y-2">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="material-symbols-outlined text-amber-700 text-[22px]">menu_book</span>
+                        <div>
+                          <p className="text-xs font-bold text-on-surface">
+                            Lançamento no Caderno de Fechamento
+                          </p>
+                          <p className="text-[11px] text-on-surface-variant">
+                            Ao salvar, uma entrada de <strong className="text-amber-900 font-bold">{formatCurrency(parseFloat(formData.valor_caucao))}</strong> via <strong>{formData.forma_pagamento_caucao}</strong> será registrada no livro caixa sob a categoria <em>"Caução de Aluguel"</em>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-surface rounded-xl px-4 py-2 border border-amber-500/20 shadow-xs text-right shrink-0">
+                        <span className="block text-[10px] font-bold uppercase text-on-surface-variant">Total Inicial a Receber</span>
+                        <span className="text-base font-black text-primary">
+                          {formatCurrency((parseFloat(formData.valor_aluguel || '0') + parseFloat(formData.valor_caucao || '0')))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+            {/* ======================================================== */}
+            {/* SEÇÃO 3: DADOS DO LOCATÁRIO / BENEFICIÁRIO */}
             {/* ======================================================== */}
             <div className="bg-surface rounded-2xl border border-outline-variant/80 shadow-sm p-6 md:p-8 space-y-6">
               
@@ -802,7 +1087,7 @@ export const AluguelForm = () => {
                     <span className="material-symbols-outlined text-[22px]">person</span>
                   </div>
                   <div>
-                    <h3 className="text-primary font-bold text-lg">2. Locatário / Beneficiário</h3>
+                    <h3 className="text-primary font-bold text-lg">3. Locatário / Beneficiário</h3>
                     <p className="text-xs text-on-surface-variant">
                       Identificação de quem está retirando os equipamentos na pastoral.
                     </p>
@@ -915,7 +1200,7 @@ export const AluguelForm = () => {
             </div>
 
             {/* ======================================================== */}
-            {/* SEÇÃO 3: CONTROLE, PRAZOS E TERMOS */}
+            {/* SEÇÃO 4: CONTROLE, PRAZOS E TERMOS */}
             {/* ======================================================== */}
             <div className="bg-surface rounded-2xl border border-outline-variant/80 shadow-sm p-6 md:p-8 space-y-6">
               
@@ -924,7 +1209,7 @@ export const AluguelForm = () => {
                   <span className="material-symbols-outlined text-[22px]">calendar_month</span>
                 </div>
                 <div>
-                  <h3 className="text-primary font-bold text-lg">3. Prazos e Condições</h3>
+                  <h3 className="text-primary font-bold text-lg">4. Prazos e Condições</h3>
                   <p className="text-xs text-on-surface-variant">
                     Controle de datas, forma de contribuição e termos de responsabilidade.
                   </p>
@@ -970,7 +1255,7 @@ export const AluguelForm = () => {
 
                 {/* Forma de Pagamento */}
                 <div className="md:col-span-4 space-y-1">
-                  <label className="block text-xs font-bold text-on-surface">Forma de Contribuição</label>
+                  <label className="block text-xs font-bold text-on-surface">Forma de Contribuição Mensal</label>
                   <select
                     name="forma_pagamento"
                     value={formData.forma_pagamento}
@@ -1054,12 +1339,62 @@ export const AluguelForm = () => {
 
           {/* Side Pane: Payment History (Edit only) & Quick Infos */}
           <div className="lg:col-span-4 space-y-6">
+            
+            {/* Bloco de Caução no Painel Lateral (quando há caução ou em edição) */}
+            {parseFloat(formData.valor_caucao || '0') > 0 && (
+              <div className="bg-surface rounded-2xl border border-amber-500/30 shadow-sm p-6 space-y-4 bg-gradient-to-b from-amber-500/5 to-surface">
+                <div className="flex justify-between items-start border-b border-surface-variant/80 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-700 text-[20px]">security</span>
+                    <div>
+                      <h4 className="font-bold text-on-surface text-sm">Caução de Garantia</h4>
+                      <p className="text-[11px] text-on-surface-variant">Depósito de segurança</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md border ${
+                    formData.caucao_pago 
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  }`}>
+                    {formData.caucao_pago ? 'Pago no Ato' : 'Pendente'}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-baseline bg-surface-container-low/60 rounded-xl p-3 border border-outline-variant/60">
+                  <span className="text-xs font-semibold text-on-surface-variant">Valor do Caução:</span>
+                  <span className="text-lg font-black text-amber-800">
+                    {formatCurrency(parseFloat(formData.valor_caucao))}
+                  </span>
+                </div>
+
+                <div className="text-xs text-on-surface-variant space-y-1 font-medium">
+                  <div className="flex justify-between">
+                    <span>Forma:</span>
+                    <span className="font-bold text-on-surface">{formData.forma_pagamento_caucao}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Caderno de Fechamento:</span>
+                    <span className="font-bold text-emerald-700">✓ Sincronizado</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setCaucaoReceiptOpen(true)}
+                  className="w-full py-2.5 px-4 bg-amber-600/10 hover:bg-amber-600/20 text-amber-800 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 border border-amber-600/30 shadow-xs active:scale-95"
+                >
+                  <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                  Emitir Recibo de Caução
+                </button>
+              </div>
+            )}
+
             {isEdit ? (
               <div className="bg-surface rounded-2xl border border-outline-variant/80 shadow-sm p-6 space-y-6">
                 <div className="flex justify-between items-center border-b border-surface-variant/80 pb-4">
                   <div>
                     <h3 className="font-bold text-primary text-base">Contribuições & Recibos</h3>
-                    <p className="text-xs text-on-surface-variant">Lançamentos recebidos deste contrato.</p>
+                    <p className="text-xs text-on-surface-variant">Mensalidades deste contrato.</p>
                   </div>
                   <button
                     onClick={() => setPayModalOpen(true)}
@@ -1084,7 +1419,7 @@ export const AluguelForm = () => {
                         <tr>
                           <td colSpan="3" className="px-4 py-8 text-center text-on-surface-variant">
                             <span className="material-symbols-outlined text-3xl text-outline mb-1">receipt</span>
-                            <p className="font-semibold text-xs">Nenhum pagamento registrado.</p>
+                            <p className="font-semibold text-xs">Nenhum pagamento mensal registrado.</p>
                             <p className="text-[11px] text-outline mt-0.5">Clique em "Registrar" para lançar uma contribuição.</p>
                           </td>
                         </tr>
@@ -1132,7 +1467,7 @@ export const AluguelForm = () => {
         </div>
       )}
 
-      {/* Modal: Registrar Contribuição */}
+      {/* Modal: Registrar Contribuição Mensal */}
       {payModalOpen && (
         <div className="fixed inset-0 bg-on-background/50 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-md border border-surface-variant p-6 flex flex-col gap-4">
@@ -1230,13 +1565,13 @@ export const AluguelForm = () => {
         </div>
       )}
 
-      {/* Full screen receipt visualizer modal */}
+      {/* Full screen monthly payment receipt visualizer modal */}
       {receiptOpen && selectedReceiptPayment && (
         <div className="fixed inset-0 bg-white z-50 overflow-y-auto p-6 md:p-12 flex flex-col items-center animate-in fade-in duration-200">
           
           {/* Controls */}
           <div className="w-full max-w-3xl flex justify-between items-center pb-6 border-b border-slate-200 mb-8 no-print">
-            <h3 className="font-bold text-slate-700 text-lg">Visualização do Recibo</h3>
+            <h3 className="font-bold text-slate-700 text-lg">Visualização do Recibo de Mensalidade</h3>
             <div className="flex gap-2">
               <button 
                 onClick={() => window.print()}
@@ -1274,7 +1609,7 @@ export const AluguelForm = () => {
               </div>
               <div className="text-right">
                 <h2 className="font-bold text-slate-800 text-xl">RECIBO DE EMPRÉSTIMO / ALUGUEL</h2>
-                <p className="text-xs text-slate-500 mt-1">Nº: {selectedReceiptPayment.id.substring(0, 8).toUpperCase()}</p>
+                <p className="text-xs text-slate-500 mt-1">Nº: {selectedReceiptPayment.id?.substring(0, 8).toUpperCase()}</p>
               </div>
             </header>
 
@@ -1295,7 +1630,6 @@ export const AluguelForm = () => {
                   <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
                       <th className="p-2.5">Item / Equipamento</th>
-                      <th className="p-2.5">Tipo</th>
                       <th className="p-2.5">S/N</th>
                       <th className="p-2.5 text-center">Qtd</th>
                       <th className="p-2.5 text-right">Vlr. Unitário</th>
@@ -1306,7 +1640,6 @@ export const AluguelForm = () => {
                     {itens.map((it, idx) => (
                       <tr key={idx}>
                         <td className="p-2.5 font-semibold text-slate-900">{it.nome_equipamento || 'Equipamento'}</td>
-                        <td className="p-2.5 text-slate-600">{it.imovel_tipo}</td>
                         <td className="p-2.5 font-mono text-slate-500">{it.numero_serie || '---'}</td>
                         <td className="p-2.5 text-center font-bold">{it.quantidade || 1}</td>
                         <td className="p-2.5 text-right">{formatCurrency(it.valor_unitario)}</td>
@@ -1337,6 +1670,141 @@ export const AluguelForm = () => {
                 <div className="w-full border-t border-dashed border-slate-400 max-w-[220px] mb-2"></div>
                 <span className="text-xs font-semibold text-slate-700">Representante da Instituição</span>
                 <span className="text-[10px] text-slate-500">Responsável</span>
+              </div>
+            </footer>
+
+          </div>
+        </div>
+      )}
+
+      {/* Full screen CAUÇÃO receipt visualizer modal */}
+      {caucaoReceiptOpen && parseFloat(formData.valor_caucao || '0') > 0 && (
+        <div className="fixed inset-0 bg-white z-50 overflow-y-auto p-6 md:p-12 flex flex-col items-center animate-in fade-in duration-200">
+          
+          {/* Controls */}
+          <div className="w-full max-w-3xl flex justify-between items-center pb-6 border-b border-slate-200 mb-8 no-print">
+            <h3 className="font-bold text-amber-800 text-lg flex items-center gap-2">
+              <span className="material-symbols-outlined text-amber-700">security</span>
+              Visualização do Recibo de Caução de Garantia
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => window.print()}
+                className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 rounded-xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">print</span>
+                Imprimir Recibo
+              </button>
+              <button 
+                onClick={handleDownloadCaucaoPDF}
+                className="px-4 py-2.5 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-all active:scale-95"
+              >
+                <span className="material-symbols-outlined text-[18px]">download</span>
+                Baixar PDF
+              </button>
+              <button 
+                onClick={() => setCaucaoReceiptOpen(false)}
+                className="px-4 py-2.5 bg-primary text-on-primary hover:bg-primary-container rounded-xl text-xs md:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+                Fechar
+              </button>
+            </div>
+          </div>
+
+          {/* Receipt template container */}
+          <div className="w-full max-w-3xl bg-white border-2 border-amber-300 p-8 md:p-12 flex flex-col gap-8 shadow-sm print:border-none print:shadow-none relative rounded-xl">
+            
+            {/* Background seal */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+              <span className="material-symbols-outlined text-[300px]">security</span>
+            </div>
+
+            {/* Header */}
+            <header className="flex justify-between items-start border-b-2 border-amber-200 pb-6 relative z-10">
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-amber-700 text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>security</span>
+                <div>
+                  <h4 className="font-bold text-slate-800 text-lg">SISTEMA PASTORAL</h4>
+                  <p className="text-xs text-slate-500">Filantropia & Gestão Inteligente</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <h2 className="font-bold text-amber-900 text-xl tracking-tight">RECIBO DE CAUÇÃO DE GARANTIA</h2>
+                <p className="text-xs text-slate-500 mt-1 font-mono">Nº: CAUCAO-{(id || 'NOVO').substring(0, 8).toUpperCase()}</p>
+              </div>
+            </header>
+
+            {/* Receipt body */}
+            <main className="space-y-6 text-sm text-slate-800 relative z-10 leading-relaxed">
+              <div className="flex justify-between items-center bg-amber-50/70 p-4 border border-amber-200 rounded-xl">
+                <div>
+                  <span className="block text-xs uppercase font-bold text-amber-800">VALOR DO CAUÇÃO RECEBIDO:</span>
+                  <span className="text-xs text-slate-600">Forma de Pagamento: <strong>{formData.forma_pagamento_caucao || 'PIX'}</strong></span>
+                </div>
+                <span className="text-2xl font-black text-amber-900">{formatCurrency(parseFloat(formData.valor_caucao || '0'))}</span>
+              </div>
+
+              <p>
+                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || 'Não informado'}</strong>, a quantia de <strong className="text-slate-900">{numberToWords(parseFloat(formData.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(formData.valor_caucao || '0'))}), paga via <strong className="text-slate-900">{formData.forma_pagamento_caucao || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
+              </p>
+
+              {/* Items Table in Receipt */}
+              <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th className="p-2.5">Equipamento / Objeto</th>
+                      <th className="p-2.5">Nº de Série</th>
+                      <th className="p-2.5 text-center">Qtd</th>
+                      <th className="p-2.5">Observações / Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {itens.map((it, idx) => (
+                      <tr key={idx}>
+                        <td className="p-2.5 font-semibold text-slate-900">{it.nome_equipamento || 'Equipamento'}</td>
+                        <td className="p-2.5 font-mono text-slate-500">{it.numero_serie || '---'}</td>
+                        <td className="p-2.5 text-center font-bold">{it.quantidade || 1}</td>
+                        <td className="p-2.5 text-slate-600">{it.descricao || 'Em perfeito estado'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Cláusula de Devolução do Caução */}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 text-xs text-slate-700 space-y-2">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[16px] text-amber-700">info</span>
+                  Termos e Condições de Devolução do Caução:
+                </p>
+                <p className="leading-relaxed">
+                  O valor do caução acima discriminado permanecerá sob a guarda e custódia da instituição durante todo o período em que os equipamentos estiverem em posse do locatário. Este montante será <strong>restituído integralmente ao beneficiário/locatário</strong> no momento da devolução dos equipamentos na sede da pastoral, desde que entregues limpos, sem avarias e em perfeito estado de funcionamento e conservação.
+                </p>
+                {formData.caucao_observacoes && (
+                  <p className="text-slate-600 italic pt-1 border-t border-slate-200">
+                    <strong>Observações Específicas:</strong> {formData.caucao_observacoes}
+                  </p>
+                )}
+              </div>
+
+              <div className="text-right text-xs text-slate-500 mt-6">
+                Data de Pagamento do Caução: {formData.data_caucao ? new Date(formData.data_caucao).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR')}
+              </div>
+            </main>
+
+            {/* Signatures block */}
+            <footer className="grid grid-cols-2 gap-8 border-t border-slate-200 pt-12 mt-8 relative z-10">
+              <div className="flex flex-col items-center">
+                <div className="w-full border-t border-dashed border-slate-400 max-w-[220px] mb-2"></div>
+                <span className="text-xs font-semibold text-slate-700">{formData.locatario_nome}</span>
+                <span className="text-[10px] text-slate-500">Locatário / Beneficiário</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-full border-t border-dashed border-slate-400 max-w-[220px] mb-2"></div>
+                <span className="text-xs font-semibold text-slate-700">Representante da Instituição</span>
+                <span className="text-[10px] text-slate-500">Responsável pelo Recebimento</span>
               </div>
             </footer>
 

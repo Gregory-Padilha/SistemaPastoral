@@ -584,12 +584,70 @@ export const fetchFinanceiroMensal = async (tipo = 'todos', mes = '', ano = '', 
   }
 }
 
+export const syncCaucaoFinanceiro = async (contratoId, aluguelData) => {
+  try {
+    const valorCaucao = parseFloat(aluguelData.valor_caucao || '0')
+    const isPago = aluguelData.caucao_pago === true || aluguelData.caucao_pago === 'true'
+    
+    // Check existing financeiro entry for this contract's caução
+    const { data: existingEntries } = await supabase
+      .from('financeiro')
+      .select('*')
+      .eq('contrato_id', contratoId)
+      .or('categoria.eq.Caução de Aluguel,mes_referencia.eq.Caução Inicial')
+      
+    const existing = existingEntries && existingEntries.length > 0 ? existingEntries[0] : null
+
+    if (valorCaucao > 0 && isPago) {
+      const eqNome = aluguelData.imovel_endereco || 'Equipamento'
+      const locatario = aluguelData.locatario_nome || 'Locatário'
+      const formaCaucao = aluguelData.forma_pagamento_caucao || aluguelData.forma_pagamento || 'PIX'
+      const dataCaucao = aluguelData.data_caucao || aluguelData.data_inicio || new Date().toISOString().split('T')[0]
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user
+
+      const financeiroPayload = {
+        tipo: 'entrada',
+        descricao: `Caução de Garantia - ${eqNome} - ${locatario}`,
+        valor: valorCaucao,
+        forma_pagamento: formaCaucao,
+        categoria: 'Caução de Aluguel',
+        data: dataCaucao,
+        responsavel_id: user?.id || null,
+        contrato_id: contratoId,
+        mes_referencia: 'Caução Inicial',
+        observacoes: `Caução de garantia recebido no ato do empréstimo de ${eqNome} para o locatário ${locatario} (CPF: ${aluguelData.locatario_cpf || 'Não informado'}). Devolução condicionada à integridade do equipamento.${aluguelData.caucao_observacoes ? ` [Obs: ${aluguelData.caucao_observacoes}]` : ''}`,
+        deletado_em: null
+      }
+
+      if (existing) {
+        await supabase
+          .from('financeiro')
+          .update(financeiroPayload)
+          .eq('id', existing.id)
+      } else {
+        await supabase
+          .from('financeiro')
+          .insert([financeiroPayload])
+      }
+    } else if (existing && (!isPago || valorCaucao === 0)) {
+      // Soft-delete if caução was revoked or zeroed
+      await supabase
+        .from('financeiro')
+        .update({ deletado_em: new Date().toISOString() })
+        .eq('id', existing.id)
+    }
+  } catch (err) {
+    console.warn('Warning syncing caucao in financeiro ledger:', err.message)
+  }
+}
+
 export const deleteLancamento = async (id) => {
   try {
     // 1. Fetch the record to check if it's related to an aluguel contract
     const { data: record } = await supabase
       .from('financeiro')
-      .select('id, contrato_id, mes_referencia, data, descricao')
+      .select('id, contrato_id, mes_referencia, data, descricao, categoria')
       .eq('id', id)
       .single()
 
@@ -600,33 +658,45 @@ export const deleteLancamento = async (id) => {
       .eq('id', id)
     if (error) throw error
 
-    // 3. If it is linked to an aluguel contract, revert ONLY that month's payment status to 'Não Pago' (red)
-    // and DO NOT delete the rental contract itself!
+    // 3. If it is linked to an aluguel contract
     if (record && record.contrato_id) {
-      try {
-        let mesNum = null
-        let anoNum = null
-
-        if (record.mes_referencia && record.mes_referencia.includes('/')) {
-          const parts = record.mes_referencia.split('/')
-          mesNum = parseInt(parts[0])
-          anoNum = parseInt(parts[1])
-        } else if (record.data) {
-          const d = new Date(record.data)
-          mesNum = d.getMonth() + 1
-          anoNum = d.getFullYear()
-        }
-
-        if (mesNum && anoNum) {
+      if (record.categoria === 'Caução de Aluguel' || record.mes_referencia === 'Caução Inicial' || record.descricao?.toLowerCase().includes('caução')) {
+        // Revert caução status on the contract
+        try {
           await supabase
-            .from('historico_pagamentos_aluguel')
-            .delete()
-            .eq('contrato_id', record.contrato_id)
-            .eq('mes_referencia', mesNum)
-            .eq('ano_referencia', anoNum)
+            .from('alugueis')
+            .update({ caucao_pago: false })
+            .eq('id', record.contrato_id)
+        } catch (cErr) {
+          console.warn('Error updating caucao_pago on aluguel delete:', cErr.message)
         }
-      } catch (cErr) {
-        console.error('Error removing payment reference from historico_pagamentos_aluguel:', cErr)
+      } else {
+        // Revert monthly payment status to 'Não Pago'
+        try {
+          let mesNum = null
+          let anoNum = null
+
+          if (record.mes_referencia && record.mes_referencia.includes('/')) {
+            const parts = record.mes_referencia.split('/')
+            mesNum = parseInt(parts[0])
+            anoNum = parseInt(parts[1])
+          } else if (record.data) {
+            const d = new Date(record.data)
+            mesNum = d.getMonth() + 1
+            anoNum = d.getFullYear()
+          }
+
+          if (mesNum && anoNum) {
+            await supabase
+              .from('historico_pagamentos_aluguel')
+              .delete()
+              .eq('contrato_id', record.contrato_id)
+              .eq('mes_referencia', mesNum)
+              .eq('ano_referencia', anoNum)
+          }
+        } catch (cErr) {
+          console.error('Error removing payment reference from historico_pagamentos_aluguel:', cErr)
+        }
       }
     }
   } catch (err) {
@@ -656,21 +726,123 @@ export const fetchEstoqueEquipamentos = async () => {
 
 export const insertEquipamento = async (equipamentoData) => {
   try {
+    const qtdTotal = parseInt(equipamentoData.quantidade_total || '1')
     const payload = {
-      ...equipamentoData,
-      quantidade_disponivel: equipamentoData.quantidade_total,
-      status: equipamentoData.quantidade_total > 0 ? 'Disponível' : 'Esgotado'
+      nome_equipamento: equipamentoData.nome_equipamento.trim(),
+      numero_serie: equipamentoData.numero_serie ? equipamentoData.numero_serie.trim() : null,
+      quantidade_total: qtdTotal,
+      quantidade_disponivel: qtdTotal,
+      status: qtdTotal > 0 ? 'Disponível' : 'Esgotado',
+      categoria: equipamentoData.categoria || 'Cadeira de Rodas',
+      estado_conservacao: equipamentoData.estado_conservacao || 'Bom estado',
+      localizacao: equipamentoData.localizacao ? equipamentoData.localizacao.trim() : 'Depósito Central',
+      valor_caucao_sugerido: parseFloat(equipamentoData.valor_caucao_sugerido || '0'),
+      valor_aluguel_sugerido: parseFloat(equipamentoData.valor_aluguel_sugerido || '0'),
+      observacoes: equipamentoData.observacoes ? equipamentoData.observacoes.trim() : null
     }
-    const { data, error } = await supabase
-      .from('estoque_equipamentos')
-      .insert([payload])
-      .select()
-      .single()
-    if (error) throw error
-    return data
+
+    try {
+      const { data, error } = await supabase
+        .from('estoque_equipamentos')
+        .insert([payload])
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.warn('Fallback inserindo equipamento sem colunas estendidas:', err.message)
+      const fallbackPayload = {
+        nome_equipamento: payload.nome_equipamento,
+        numero_serie: payload.numero_serie,
+        quantidade_total: payload.quantidade_total,
+        quantidade_disponivel: payload.quantidade_disponivel,
+        status: payload.status
+      }
+      const { data, error } = await supabase
+        .from('estoque_equipamentos')
+        .insert([fallbackPayload])
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
   } catch (err) {
     console.error('Error inserting item in estoque:', err)
     throw new Error('Erro ao cadastrar equipamento em estoque: ' + err.message)
+  }
+}
+
+export const updateEquipamento = async (id, equipamentoData) => {
+  try {
+    const { data: current, error: getErr } = await supabase
+      .from('estoque_equipamentos')
+      .select('quantidade_total, quantidade_disponivel')
+      .eq('id', id)
+      .single()
+    if (getErr) throw getErr
+
+    const newTotal = parseInt(equipamentoData.quantidade_total || current.quantidade_total || '1')
+    const diff = newTotal - (current.quantidade_total || 0)
+    const newDisponivel = Math.max(0, (current.quantidade_disponivel || 0) + diff)
+
+    const payload = {
+      nome_equipamento: equipamentoData.nome_equipamento.trim(),
+      numero_serie: equipamentoData.numero_serie ? equipamentoData.numero_serie.trim() : null,
+      quantidade_total: newTotal,
+      quantidade_disponivel: newDisponivel,
+      status: newDisponivel > 0 ? 'Disponível' : 'Esgotado',
+      categoria: equipamentoData.categoria || 'Cadeira de Rodas',
+      estado_conservacao: equipamentoData.estado_conservacao || 'Bom estado',
+      localizacao: equipamentoData.localizacao ? equipamentoData.localizacao.trim() : 'Depósito Central',
+      valor_caucao_sugerido: parseFloat(equipamentoData.valor_caucao_sugerido || '0'),
+      valor_aluguel_sugerido: parseFloat(equipamentoData.valor_aluguel_sugerido || '0'),
+      observacoes: equipamentoData.observacoes ? equipamentoData.observacoes.trim() : null
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('estoque_equipamentos')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    } catch (err) {
+      console.warn('Fallback atualizando equipamento sem colunas estendidas:', err.message)
+      const fallbackPayload = {
+        nome_equipamento: payload.nome_equipamento,
+        numero_serie: payload.numero_serie,
+        quantidade_total: payload.quantidade_total,
+        quantidade_disponivel: payload.quantidade_disponivel,
+        status: payload.status
+      }
+      const { data, error } = await supabase
+        .from('estoque_equipamentos')
+        .update(fallbackPayload)
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    }
+  } catch (err) {
+    console.error('Error updating item in estoque:', err)
+    throw new Error('Erro ao atualizar equipamento em estoque: ' + err.message)
+  }
+}
+
+export const deleteEquipamento = async (id) => {
+  try {
+    const { error } = await supabase
+      .from('estoque_equipamentos')
+      .update({ deletado_em: new Date().toISOString() })
+      .eq('id', id)
+    if (error) throw error
+    return true
+  } catch (err) {
+    console.error('Error soft deleting item from estoque:', err)
+    throw new Error('Erro ao excluir equipamento do estoque: ' + err.message)
   }
 }
 
@@ -683,7 +855,7 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
     const { data, error } = await query.order('locatario_nome')
     if (error) throw error
     
-    // Parse itens for each contract returned in list
+    // Parse itens and caucao for each contract returned in list
     const parsedList = (data || []).map(aluguel => {
       let parsedItens = []
       if (Array.isArray(aluguel.itens) && aluguel.itens.length > 0) {
@@ -712,9 +884,37 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
         }]
       }
 
+      // Parse caucao fallback from observacoes if needed
+      let parsedCaucao = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--CAUCAO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--CAUCAO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedCaucao = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
+      const valorCaucao = aluguel.valor_caucao !== undefined && aluguel.valor_caucao !== null
+        ? parseFloat(aluguel.valor_caucao)
+        : (parseFloat(parsedCaucao.valor_caucao || '0'))
+
+      const caucaoPago = aluguel.caucao_pago !== undefined && aluguel.caucao_pago !== null
+        ? !!aluguel.caucao_pago
+        : (!!parsedCaucao.caucao_pago)
+
+      const formaCaucao = aluguel.forma_pagamento_caucao || parsedCaucao.forma_pagamento_caucao || 'PIX'
+      const dataCaucao = aluguel.data_caucao || parsedCaucao.data_caucao || aluguel.data_inicio || ''
+      const obsCaucao = aluguel.caucao_observacoes || parsedCaucao.caucao_observacoes || ''
+
       return {
         ...aluguel,
-        itens: parsedItens
+        itens: parsedItens,
+        valor_caucao: valorCaucao,
+        caucao_pago: caucaoPago,
+        forma_pagamento_caucao: formaCaucao,
+        data_caucao: dataCaucao,
+        caucao_observacoes: obsCaucao
       }
     })
 
@@ -765,6 +965,29 @@ export const fetchAluguelById = async (id) => {
         }]
       }
       aluguel.itens = parsedItens
+
+      // Parse caucao fallback
+      let parsedCaucao = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--CAUCAO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--CAUCAO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedCaucao = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
+      aluguel.valor_caucao = aluguel.valor_caucao !== undefined && aluguel.valor_caucao !== null
+        ? parseFloat(aluguel.valor_caucao)
+        : (parseFloat(parsedCaucao.valor_caucao || '0'))
+
+      aluguel.caucao_pago = aluguel.caucao_pago !== undefined && aluguel.caucao_pago !== null
+        ? !!aluguel.caucao_pago
+        : (!!parsedCaucao.caucao_pago)
+
+      aluguel.forma_pagamento_caucao = aluguel.forma_pagamento_caucao || parsedCaucao.forma_pagamento_caucao || 'PIX'
+      aluguel.data_caucao = aluguel.data_caucao || parsedCaucao.data_caucao || aluguel.data_inicio || ''
+      aluguel.caucao_observacoes = aluguel.caucao_observacoes || parsedCaucao.caucao_observacoes || ''
     }
 
     return aluguel
@@ -781,7 +1004,7 @@ export const insertAluguel = async (aluguelData) => {
     // Prepare clean payload
     const payload = { ...aluguelData }
     
-    // Check if itens column is supported or embed in observacoes
+    // Check if itens / caucao columns are supported or embed in observacoes
     let data = null
     let insertError = null
 
@@ -797,12 +1020,25 @@ export const insertAluguel = async (aluguelData) => {
       insertError = e
     }
 
-    // Fallback if column 'itens' does not exist in database yet
-    if (insertError && (insertError.code === '42703' || insertError.message?.includes('itens'))) {
+    // Fallback if columns 'itens' or 'valor_caucao' do not exist in database schema yet
+    if (insertError && (insertError.code === '42703' || insertError.message?.includes('itens') || insertError.message?.includes('caucao'))) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
+      delete fallbackPayload.valor_caucao
+      delete fallbackPayload.caucao_pago
+      delete fallbackPayload.forma_pagamento_caucao
+      delete fallbackPayload.data_caucao
+      delete fallbackPayload.caucao_observacoes
       
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->`
+      const caucaoObj = {
+        valor_caucao: aluguelData.valor_caucao || 0,
+        caucao_pago: aluguelData.caucao_pago || false,
+        forma_pagamento_caucao: aluguelData.forma_pagamento_caucao || 'PIX',
+        data_caucao: aluguelData.data_caucao || aluguelData.data_inicio || '',
+        caucao_observacoes: aluguelData.caucao_observacoes || ''
+      }
+
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->`
       fallbackPayload.observacoes = (fallbackPayload.observacoes || '') + embeddedMetadata
 
       const retryRes = await supabase
@@ -817,8 +1053,10 @@ export const insertAluguel = async (aluguelData) => {
       throw insertError
     }
 
-    // Note: Creating a rental does NOT insert into financeiro automatically.
-    // Financial entries are only generated when monthly payments are marked as 'Pago'.
+    // Automatically register Caução entry in financeiro (Caderno de Fechamento) if paid
+    if (data && data.id) {
+      await syncCaucaoFinanceiro(data.id, aluguelData)
+    }
 
     // Decrement stock for all items in the rental if status is 'Ativo'
     if (data.status === 'Ativo' && itens.length > 0) {
@@ -858,7 +1096,7 @@ export const updateAluguel = async (id, aluguelData) => {
     // Fetch current record to compare status
     const { data: current, error: fetchErr } = await supabase
       .from('alugueis')
-      .select('status, equipamento_id, observacoes, itens')
+      .select('status, equipamento_id, observacoes, itens, valor_caucao, caucao_pago')
       .eq('id', id)
       .single()
 
@@ -879,14 +1117,30 @@ export const updateAluguel = async (id, aluguelData) => {
       updateError = e
     }
 
-    // Fallback if column 'itens' does not exist in database yet
-    if (updateError && (updateError.code === '42703' || updateError.message?.includes('itens'))) {
+    // Fallback if column 'itens' or 'valor_caucao' does not exist in database yet
+    if (updateError && (updateError.code === '42703' || updateError.message?.includes('itens') || updateError.message?.includes('caucao'))) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
+      delete fallbackPayload.valor_caucao
+      delete fallbackPayload.caucao_pago
+      delete fallbackPayload.forma_pagamento_caucao
+      delete fallbackPayload.data_caucao
+      delete fallbackPayload.caucao_observacoes
       
+      const caucaoObj = {
+        valor_caucao: aluguelData.valor_caucao || 0,
+        caucao_pago: aluguelData.caucao_pago || false,
+        forma_pagamento_caucao: aluguelData.forma_pagamento_caucao || 'PIX',
+        data_caucao: aluguelData.data_caucao || aluguelData.data_inicio || '',
+        caucao_observacoes: aluguelData.caucao_observacoes || ''
+      }
+
       // Clean previous embedded metadata and append updated one
-      let cleanObs = (fallbackPayload.observacoes || '').replace(/<!--ITENS_JSON:.*?-->/g, '').trim()
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->`
+      let cleanObs = (fallbackPayload.observacoes || '')
+        .replace(/<!--ITENS_JSON:.*?-->/g, '')
+        .replace(/<!--CAUCAO_JSON:.*?-->/g, '')
+        .trim()
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->`
       fallbackPayload.observacoes = cleanObs + embeddedMetadata
 
       const retryRes = await supabase
@@ -901,6 +1155,9 @@ export const updateAluguel = async (id, aluguelData) => {
     } else if (updateError) {
       throw updateError
     }
+
+    // Sync Caução in financeiro ledger
+    await syncCaucaoFinanceiro(id, aluguelData)
 
     // Handle stock updates based on status transitions
     if (!fetchErr && current) {
