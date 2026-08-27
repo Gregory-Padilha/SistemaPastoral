@@ -518,7 +518,7 @@ export const Dashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         
         {/* Financial Flow Bar Chart (8 Cols) */}
-        <div className="lg:col-span-8 bg-surface rounded-3xl shadow-xs border border-outline-variant/80 p-6 md:p-7 flex flex-col justify-between relative overflow-hidden">
+        <div className="lg:col-span-8 bg-surface rounded-3xl shadow-xs border border-outline-variant/80 p-6 md:p-7 flex flex-col justify-between relative">
           
           {/* Top Bar: Title, Summary Pills & Legend */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-surface-variant/70">
@@ -533,158 +533,159 @@ export const Dashboard = () => {
                 </span>
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
-                Comparativo mensal de entradas vs saídas no período.
+                Comparativo consolidado de entradas e saídas no período.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs font-bold shrink-0">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shadow-2xs"></span>
+            <div className="flex flex-wrap items-center gap-2.5 text-xs font-bold shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-2xs"></span>
                 <span>Entradas: {formatCurrency(totalPeriodoEntradas)}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-rose-50 text-rose-800 border border-rose-200">
-                <span className="w-2.5 h-2.5 rounded-full bg-rose-600 shadow-2xs"></span>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 text-secondary border border-secondary/20">
+                <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-2xs"></span>
                 <span>Saídas: {formatCurrency(totalPeriodoSaidas)}</span>
               </div>
             </div>
           </div>
 
-          {/* Chart Canvas Area */}
-          <div className="flex-1 min-h-[260px] flex items-end relative pt-8 pl-14 sm:pl-16 pr-2 pb-8 mt-2">
+          {/* Chart Canvas: 2-Column Layout (Zero Leaking Left Y-Axis + Responsive Grid) */}
+          <div className="flex items-stretch pt-6 pb-2 min-h-[260px] gap-2">
             
-            {/* Grid & Y-Axis Reference Lines */}
-            <div className="absolute left-0 top-6 bottom-10 w-full flex flex-col justify-between pointer-events-none">
-              
-              {/* 100% Top line */}
-              <div className="w-full border-t border-dashed border-outline-variant/50 relative flex items-center">
-                <span className="absolute -left-14 sm:-left-16 text-[10px] font-mono font-bold text-outline w-12 sm:w-14 text-right">
-                  {formatCurrencyShort(maxGraphVal)}
-                </span>
-              </div>
-
-              {/* 66% Mid-high line */}
-              <div className="w-full border-t border-dashed border-outline-variant/40 relative flex items-center">
-                <span className="absolute -left-14 sm:-left-16 text-[10px] font-mono font-semibold text-outline/80 w-12 sm:w-14 text-right">
-                  {formatCurrencyShort(maxGraphVal * 0.66)}
-                </span>
-              </div>
-
-              {/* 33% Mid-low line */}
-              <div className="w-full border-t border-dashed border-outline-variant/40 relative flex items-center">
-                <span className="absolute -left-14 sm:-left-16 text-[10px] font-mono font-semibold text-outline/80 w-12 sm:w-14 text-right">
-                  {formatCurrencyShort(maxGraphVal * 0.33)}
-                </span>
-              </div>
-
-              {/* 0% Baseline */}
-              <div className="w-full border-t-2 border-outline-variant/80 relative flex items-center">
-                <span className="absolute -left-14 sm:-left-16 text-[10px] font-mono font-bold text-outline w-12 sm:w-14 text-right">
-                  R$ 0
-                </span>
-              </div>
+            {/* Column 1: Left Y-Axis Labels Container (No negative margins, perfectly contained) */}
+            <div className="w-14 sm:w-16 shrink-0 flex flex-col justify-between text-right pr-2 select-none h-[190px] pt-1 pb-6">
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-outline">
+                {formatCurrencyShort(maxGraphVal)}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold text-outline/80">
+                {formatCurrencyShort(maxGraphVal * 0.66)}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-mono font-semibold text-outline/80">
+                {formatCurrencyShort(maxGraphVal * 0.33)}
+              </span>
+              <span className="text-[10px] sm:text-[11px] font-mono font-bold text-outline">
+                R$ 0
+              </span>
             </div>
 
-            {/* Month Columns Grid */}
-            <div className="flex-1 grid grid-cols-6 gap-2 sm:gap-4 h-[200px] z-10 items-end">
-              {(historicoGrafico || []).map((m, idx) => {
-                const entradaPct = maxGraphVal > 0 ? (m.entradas / maxGraphVal) * 100 : 0
-                const saidaPct = maxGraphVal > 0 ? (m.saidas / maxGraphVal) * 100 : 0
-                const isHovered = activeTooltipMonth === idx
-                const isCurrentMonth = idx === (historicoGrafico.length - 1)
+            {/* Column 2: Grid Lines & Bars Area */}
+            <div className="flex-1 relative flex flex-col justify-between">
+              
+              {/* Background Reference Lines */}
+              <div className="absolute inset-x-0 top-1 bottom-6 flex flex-col justify-between pointer-events-none">
+                <div className="w-full border-t border-dashed border-outline-variant/60"></div>
+                <div className="w-full border-t border-dashed border-outline-variant/40"></div>
+                <div className="w-full border-t border-dashed border-outline-variant/40"></div>
+                <div className="w-full border-t-2 border-outline-variant/80"></div>
+              </div>
 
-                return (
-                  <div 
-                    key={idx} 
-                    onMouseEnter={() => setActiveTooltipMonth(idx)}
-                    onMouseLeave={() => setActiveTooltipMonth(null)}
-                    className={`flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all duration-200 rounded-2xl p-1.5 ${
-                      isHovered ? 'bg-primary/5 shadow-2xs' : 'hover:bg-surface-container-lowest'
-                    }`}
-                  >
-                    
-                    {/* Floating Tooltip Popup on hover */}
-                    {isHovered && (
-                      <div className="absolute -top-24 sm:-top-28 left-1/2 -translate-x-1/2 bg-slate-900 text-white rounded-2xl p-3 shadow-2xl z-30 min-w-[160px] pointer-events-none animate-in fade-in zoom-in-95 duration-150 border border-slate-700">
-                        <div className="text-[11px] font-extrabold text-slate-300 border-b border-slate-700 pb-1 mb-1.5 flex items-center justify-between">
-                          <span>{m.mesCompleto || m.mes}</span>
-                          {isCurrentMonth && <span className="text-[9px] bg-primary text-on-primary px-1.5 py-0.2 rounded font-bold">Mês Atual</span>}
-                        </div>
-                        <div className="space-y-1 text-xs font-mono">
-                          <div className="flex justify-between items-center text-emerald-400">
-                            <span className="text-[10px] font-sans font-semibold text-slate-400">Entradas:</span>
-                            <span className="font-bold">{formatCurrency(m.entradas)}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-rose-400">
-                            <span className="text-[10px] font-sans font-semibold text-slate-400">Saídas:</span>
-                            <span className="font-bold">{formatCurrency(m.saidas)}</span>
-                          </div>
-                          <div className="flex justify-between items-center pt-1 border-t border-slate-700 font-bold">
-                            <span className="text-[10px] font-sans font-semibold text-slate-400">Balanço:</span>
-                            <span className={m.saldo >= 0 ? 'text-emerald-300' : 'text-rose-300'}>
-                              {m.saldo >= 0 ? '+' : ''}{formatCurrency(m.saldo)}
-                            </span>
-                          </div>
-                        </div>
-                        {/* Triangle arrow */}
-                        <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-b border-r border-slate-700 transform rotate-45"></div>
-                      </div>
-                    )}
+              {/* Month Columns Grid */}
+              <div className="grid grid-cols-6 gap-1.5 sm:gap-3 h-[190px] z-10 items-end pb-6">
+                {(historicoGrafico || []).map((m, idx) => {
+                  const entradaPct = maxGraphVal > 0 ? (m.entradas / maxGraphVal) * 100 : 0
+                  const saidaPct = maxGraphVal > 0 ? (m.saidas / maxGraphVal) * 100 : 0
+                  const isHovered = activeTooltipMonth === idx
+                  const isCurrentMonth = idx === (historicoGrafico.length - 1)
 
-                    {/* Bars Pair Container */}
-                    <div className="flex gap-1.5 sm:gap-2 items-end h-[160px] w-full justify-center pb-2">
+                  return (
+                    <div 
+                      key={idx} 
+                      onMouseEnter={() => setActiveTooltipMonth(idx)}
+                      onMouseLeave={() => setActiveTooltipMonth(null)}
+                      className={`flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all duration-200 rounded-2xl p-1 ${
+                        isHovered ? 'bg-primary/5 shadow-2xs' : 'hover:bg-surface-container-lowest'
+                      }`}
+                    >
                       
-                      {/* Entrada Bar */}
-                      <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
-                        {m.entradas > 0 && (
-                          <span className="text-[9px] font-mono font-bold text-emerald-700 opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
-                            {formatCurrencyShort(m.entradas)}
-                          </span>
-                        )}
-                        <div 
-                          style={{ height: `${Math.max(entradaPct, m.entradas > 0 ? 6 : 2)}%` }} 
-                          className={`w-full rounded-t-lg transition-all duration-300 ${
-                            m.entradas > 0
-                              ? 'bg-gradient-to-t from-emerald-700 to-emerald-500 group-hover:from-emerald-600 group-hover:to-emerald-400 shadow-sm shadow-emerald-700/20'
-                              : 'bg-outline-variant/30'
-                          }`}
-                        ></div>
+                      {/* Floating Tooltip in Harmonious Pastoral Theme */}
+                      {isHovered && (
+                        <div className="absolute -top-24 sm:-top-28 left-1/2 -translate-x-1/2 bg-surface border-2 border-outline-variant rounded-2xl p-3 shadow-xl z-30 min-w-[170px] pointer-events-none animate-in fade-in zoom-in-95 duration-150">
+                          <div className="text-[11px] font-extrabold text-on-surface border-b border-surface-variant/80 pb-1 mb-1.5 flex items-center justify-between">
+                            <span>{m.mesCompleto || m.mes}</span>
+                            {isCurrentMonth && (
+                              <span className="text-[9px] bg-primary text-on-primary px-1.5 py-0.2 rounded font-bold">
+                                Mês Atual
+                              </span>
+                            )}
+                          </div>
+                          <div className="space-y-1 text-xs font-mono">
+                            <div className="flex justify-between items-center text-primary">
+                              <span className="text-[10px] font-sans font-semibold text-on-surface-variant">Entradas:</span>
+                              <span className="font-bold">{formatCurrency(m.entradas)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-secondary">
+                              <span className="text-[10px] font-sans font-semibold text-on-surface-variant">Saídas:</span>
+                              <span className="font-bold">{formatCurrency(m.saidas)}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-1 border-t border-surface-variant/80 font-bold">
+                              <span className="text-[10px] font-sans font-semibold text-on-surface-variant">Balanço:</span>
+                              <span className={m.saldo >= 0 ? 'text-primary font-black' : 'text-secondary font-black'}>
+                                {m.saldo >= 0 ? '+' : ''}{formatCurrency(m.saldo)}
+                              </span>
+                            </div>
+                          </div>
+                          {/* Triangle arrow */}
+                          <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-surface border-b-2 border-r-2 border-outline-variant transform rotate-45"></div>
+                        </div>
+                      )}
+
+                      {/* Bars Pair Container */}
+                      <div className="flex gap-1 sm:gap-2 items-end h-[145px] w-full justify-center pb-1">
+                        
+                        {/* Entrada Bar (Primary Olive Green) */}
+                        <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
+                          {m.entradas > 0 && (
+                            <span className="text-[9px] font-mono font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
+                              {formatCurrencyShort(m.entradas)}
+                            </span>
+                          )}
+                          <div 
+                            style={{ height: `${Math.max(entradaPct, m.entradas > 0 ? 8 : 2)}%` }} 
+                            className={`w-full rounded-t-lg transition-all duration-300 ${
+                              m.entradas > 0
+                                ? 'bg-gradient-to-t from-primary to-primary-container group-hover:from-primary-container group-hover:to-[#6d8a3a] shadow-xs'
+                                : 'bg-outline-variant/30'
+                            }`}
+                          ></div>
+                        </div>
+
+                        {/* Saida Bar (Secondary Terracotta Earth) */}
+                        <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
+                          {m.saidas > 0 && (
+                            <span className="text-[9px] font-mono font-bold text-secondary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
+                              {formatCurrencyShort(m.saidas)}
+                            </span>
+                          )}
+                          <div 
+                            style={{ height: `${Math.max(saidaPct, m.saidas > 0 ? 8 : 2)}%` }} 
+                            className={`w-full rounded-t-lg transition-all duration-300 ${
+                              m.saidas > 0
+                                ? 'bg-gradient-to-t from-secondary to-[#8c6d48] group-hover:from-[#8c6d48] group-hover:to-[#a78358] shadow-xs'
+                                : 'bg-outline-variant/30'
+                            }`}
+                          ></div>
+                        </div>
+
                       </div>
 
-                      {/* Saida Bar */}
-                      <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
-                        {m.saidas > 0 && (
-                          <span className="text-[9px] font-mono font-bold text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
-                            {formatCurrencyShort(m.saidas)}
-                          </span>
-                        )}
-                        <div 
-                          style={{ height: `${Math.max(saidaPct, m.saidas > 0 ? 6 : 2)}%` }} 
-                          className={`w-full rounded-t-lg transition-all duration-300 ${
-                            m.saidas > 0
-                              ? 'bg-gradient-to-t from-rose-700 to-rose-500 group-hover:from-rose-600 group-hover:to-rose-400 shadow-sm shadow-rose-700/20'
-                              : 'bg-outline-variant/30'
-                          }`}
-                        ></div>
+                      {/* Month Label Pill */}
+                      <div className="mt-1 flex flex-col items-center">
+                        <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-lg transition-colors ${
+                          isCurrentMonth 
+                            ? 'bg-primary text-on-primary shadow-2xs' 
+                            : isHovered 
+                            ? 'bg-primary/15 text-primary' 
+                            : 'text-on-surface-variant group-hover:text-primary'
+                        }`}>
+                          {m.mes}
+                        </span>
                       </div>
 
                     </div>
+                  )
+                })}
+              </div>
 
-                    {/* Month Label Pill */}
-                    <div className="mt-2 flex flex-col items-center">
-                      <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-lg transition-colors ${
-                        isCurrentMonth 
-                          ? 'bg-primary text-on-primary shadow-2xs' 
-                          : isHovered 
-                          ? 'bg-primary/15 text-primary' 
-                          : 'text-on-surface-variant group-hover:text-primary'
-                      }`}>
-                        {m.mes}
-                      </span>
-                    </div>
-
-                  </div>
-                )
-              })}
             </div>
 
           </div>
@@ -699,8 +700,8 @@ export const Dashboard = () => {
               <span className="text-on-surface-variant text-[11px]">Saldo Consolidado do Período:</span>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-black border ${
                 saldoPeriodo >= 0
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
-                  : 'bg-rose-50 text-rose-800 border-rose-300'
+                  ? 'bg-primary/10 text-primary border-primary/25'
+                  : 'bg-secondary/10 text-secondary border-secondary/25'
               }`}>
                 {saldoPeriodo >= 0 ? '+' : ''}{formatCurrency(saldoPeriodo)}
               </span>
