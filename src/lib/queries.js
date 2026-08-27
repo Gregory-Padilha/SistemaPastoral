@@ -363,6 +363,37 @@ export const fetchDashboardData = async () => {
     }
   }
 
+  // Calculate weekly slots for the last 6 weeks
+  const currentDay = now.getDay()
+  const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay
+  const mondayThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMonday)
+  mondayThisWeek.setHours(0, 0, 0, 0)
+
+  const weeklySummary = []
+  for (let i = 5; i >= 0; i--) {
+    const weekStart = new Date(mondayThisWeek)
+    weekStart.setDate(mondayThisWeek.getDate() - (i * 7))
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekStart.getDate() + 6)
+    weekEnd.setHours(23, 59, 59, 999)
+
+    const startDay = String(weekStart.getDate()).padStart(2, '0')
+    const startMonth = weekStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').trim()
+    const endDay = String(weekEnd.getDate()).padStart(2, '0')
+    const endMonth = weekEnd.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').trim()
+
+    weeklySummary.push({
+      index: 5 - i,
+      weekStartStr: weekStart.toISOString().split('T')[0],
+      weekEndStr: weekEnd.toISOString().split('T')[0],
+      label: i === 0 ? 'Esta Sem' : `Sem ${6 - i}`,
+      shortLabel: `${startDay}/${String(weekStart.getMonth() + 1).padStart(2, '0')}`,
+      mesCompleto: `Semana de ${startDay}/${String(weekStart.getMonth() + 1).padStart(2, '0')} a ${endDay}/${String(weekEnd.getMonth() + 1).padStart(2, '0')}`,
+      entradas: 0,
+      saidas: 0
+    })
+  }
+
   try {
     const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString().split('T')[0]
     const { data: chartDataRaw, error } = await supabase
@@ -373,12 +404,23 @@ export const fetchDashboardData = async () => {
     if (error) throw error
     if (chartDataRaw) {
       chartDataRaw.forEach(item => {
-        const monthKey = item.data.substring(0, 7) // YYYY-MM
+        const itemDate = item.data ? item.data.split('T')[0] : ''
+        const monthKey = itemDate.substring(0, 7) // YYYY-MM
+        const val = parseFloat(item.valor) || 0
+
+        // Monthly bucket
         if (monthlySummary[monthKey]) {
-          const val = parseFloat(item.valor) || 0
           if (item.tipo === 'entrada') monthlySummary[monthKey].entradas += val
           if (item.tipo === 'saida') monthlySummary[monthKey].saidas += val
         }
+
+        // Weekly bucket
+        weeklySummary.forEach(w => {
+          if (itemDate >= w.weekStartStr && itemDate <= w.weekEndStr) {
+            if (item.tipo === 'entrada') w.entradas += val
+            if (item.tipo === 'saida') w.saidas += val
+          }
+        })
       })
     }
   } catch (err) {
@@ -396,6 +438,16 @@ export const fetchDashboardData = async () => {
       saidas: monthlySummary[key].saidas,
       saldo: monthlySummary[key].entradas - monthlySummary[key].saidas
     }))
+
+  const historicoSemanal = weeklySummary.map(w => ({
+    key: w.weekStartStr,
+    mes: w.label,
+    subLabel: w.shortLabel,
+    mesCompleto: w.mesCompleto,
+    entradas: w.entradas,
+    saidas: w.saidas,
+    saldo: w.entradas - w.saidas
+  }))
 
   let beneficiariosRecentes = []
   try {
@@ -446,6 +498,7 @@ export const fetchDashboardData = async () => {
     saldoMes: totalEntradasMes - totalSaidasMes,
     totalCadastrosGerais,
     historicoGrafico,
+    historicoSemanal,
     beneficiariosRecentes,
     financeiroRecente,
     entregasCestasMes

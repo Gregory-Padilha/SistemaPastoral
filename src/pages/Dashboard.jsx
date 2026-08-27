@@ -19,6 +19,7 @@ export const Dashboard = () => {
   const [config, setConfig] = useState(null)
   const [cestasVinculadasCount, setCestasVinculadasCount] = useState(0)
   const [activeTooltipMonth, setActiveTooltipMonth] = useState(null)
+  const [chartViewMode, setChartViewMode] = useState('mes') // 'mes' | 'semana'
 
   const loadDashboard = async (silent = false) => {
     if (!silent && !data) setLoading(true)
@@ -342,7 +343,8 @@ export const Dashboard = () => {
     totalSaidasMes,
     saldoMes,
     totalCadastrosGerais,
-    historicoGrafico,
+    historicoGrafico = [],
+    historicoSemanal = [],
     beneficiariosRecentes,
     financeiroRecente,
     entregasCestasMes
@@ -366,8 +368,10 @@ export const Dashboard = () => {
     }).format(val || 0)
   }
 
+  const activeChartData = chartViewMode === 'mes' ? historicoGrafico : historicoSemanal
+
   const highestValueInHistory = Math.max(
-    ...(historicoGrafico || []).map(m => Math.max(m.entradas || 0, m.saidas || 0)),
+    ...(activeChartData || []).map(m => Math.max(m.entradas || 0, m.saidas || 0)),
     0
   )
 
@@ -384,8 +388,8 @@ export const Dashboard = () => {
 
   const maxGraphVal = calcMaxCeiling(highestValueInHistory)
 
-  const totalPeriodoEntradas = (historicoGrafico || []).reduce((acc, m) => acc + (m.entradas || 0), 0)
-  const totalPeriodoSaidas = (historicoGrafico || []).reduce((acc, m) => acc + (m.saidas || 0), 0)
+  const totalPeriodoEntradas = (activeChartData || []).reduce((acc, m) => acc + (m.entradas || 0), 0)
+  const totalPeriodoSaidas = (activeChartData || []).reduce((acc, m) => acc + (m.saidas || 0), 0)
   const saldoPeriodo = totalPeriodoEntradas - totalPeriodoSaidas
 
   const totalCestas = basketProgress.total || ativosCestas || 0
@@ -520,7 +524,7 @@ export const Dashboard = () => {
         {/* Financial Flow Bar Chart (8 Cols) */}
         <div className="lg:col-span-8 bg-surface rounded-3xl shadow-xs border border-outline-variant/80 p-6 md:p-7 flex flex-col justify-between relative">
           
-          {/* Top Bar: Title, Summary Pills & Legend */}
+          {/* Top Bar: Title, View Switcher Controller & Legend */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-surface-variant/70">
             <div>
               <div className="flex items-center gap-2">
@@ -529,23 +533,56 @@ export const Dashboard = () => {
                 </div>
                 <h3 className="font-bold text-primary text-base">Movimentação Financeira</h3>
                 <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-full border border-outline-variant/60">
-                  Últimos 6 meses
+                  {chartViewMode === 'mes' ? 'Últimos 6 meses' : 'Últimas 6 semanas'}
                 </span>
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
-                Comparativo consolidado de entradas e saídas no período.
+                {chartViewMode === 'mes' ? 'Comparativo mensal consolidado de entradas e saídas.' : 'Acompanhamento semanal detalhado de receitas e despesas.'}
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2.5 text-xs font-bold shrink-0">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-2xs"></span>
-                <span>Entradas: {formatCurrency(totalPeriodoEntradas)}</span>
+            <div className="flex flex-wrap items-center gap-3 text-xs font-bold shrink-0">
+              
+              {/* Controller: Mês / Semana Switcher */}
+              <div className="bg-surface-container-low p-1 rounded-2xl border border-outline-variant/70 flex items-center gap-1 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => { setChartViewMode('mes'); setActiveTooltipMonth(null) }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    chartViewMode === 'mes'
+                      ? 'bg-primary text-on-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">calendar_month</span>
+                  Mensal
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setChartViewMode('semana'); setActiveTooltipMonth(null) }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 ${
+                    chartViewMode === 'semana'
+                      ? 'bg-primary text-on-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">date_range</span>
+                  Semanal
+                </button>
               </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/10 text-secondary border border-secondary/20">
-                <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-2xs"></span>
-                <span>Saídas: {formatCurrency(totalPeriodoSaidas)}</span>
+
+              {/* Summary Legend Badges */}
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary shadow-2xs"></span>
+                  <span>{formatCurrency(totalPeriodoEntradas)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-secondary/10 text-secondary border border-secondary/20">
+                  <span className="w-2.5 h-2.5 rounded-full bg-secondary shadow-2xs"></span>
+                  <span>{formatCurrency(totalPeriodoSaidas)}</span>
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -579,13 +616,13 @@ export const Dashboard = () => {
                 <div className="w-full border-t-2 border-outline-variant/80"></div>
               </div>
 
-              {/* Month Columns Grid */}
-              <div className="grid grid-cols-6 gap-1.5 sm:gap-3 h-[190px] z-10 items-end pb-6">
-                {(historicoGrafico || []).map((m, idx) => {
+              {/* Columns Grid (6 months or 6 weeks) */}
+              <div className="grid grid-cols-6 gap-1 sm:gap-2.5 h-[190px] z-10 items-end pb-6">
+                {(activeChartData || []).map((m, idx) => {
                   const entradaPct = maxGraphVal > 0 ? (m.entradas / maxGraphVal) * 100 : 0
                   const saidaPct = maxGraphVal > 0 ? (m.saidas / maxGraphVal) * 100 : 0
                   const isHovered = activeTooltipMonth === idx
-                  const isCurrentMonth = idx === (historicoGrafico.length - 1)
+                  const isCurrent = idx === (activeChartData.length - 1)
 
                   return (
                     <div 
@@ -602,9 +639,9 @@ export const Dashboard = () => {
                         <div className="absolute -top-24 sm:-top-28 left-1/2 -translate-x-1/2 bg-surface border-2 border-outline-variant rounded-2xl p-3 shadow-xl z-30 min-w-[170px] pointer-events-none animate-in fade-in zoom-in-95 duration-150">
                           <div className="text-[11px] font-extrabold text-on-surface border-b border-surface-variant/80 pb-1 mb-1.5 flex items-center justify-between">
                             <span>{m.mesCompleto || m.mes}</span>
-                            {isCurrentMonth && (
+                            {isCurrent && (
                               <span className="text-[9px] bg-primary text-on-primary px-1.5 py-0.2 rounded font-bold">
-                                Mês Atual
+                                {chartViewMode === 'mes' ? 'Mês Atual' : 'Esta Semana'}
                               </span>
                             )}
                           </div>
@@ -633,7 +670,7 @@ export const Dashboard = () => {
                       <div className="flex gap-1 sm:gap-2 items-end h-[145px] w-full justify-center pb-1">
                         
                         {/* Entrada Bar (Primary Olive Green) */}
-                        <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
+                        <div className="flex flex-col items-center h-full justify-end w-3 sm:w-4 md:w-5">
                           {m.entradas > 0 && (
                             <span className="text-[9px] font-mono font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
                               {formatCurrencyShort(m.entradas)}
@@ -650,7 +687,7 @@ export const Dashboard = () => {
                         </div>
 
                         {/* Saida Bar (Secondary Terracotta Earth) */}
-                        <div className="flex flex-col items-center h-full justify-end w-3.5 sm:w-5 md:w-6">
+                        <div className="flex flex-col items-center h-full justify-end w-3 sm:w-4 md:w-5">
                           {m.saidas > 0 && (
                             <span className="text-[9px] font-mono font-bold text-secondary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
                               {formatCurrencyShort(m.saidas)}
@@ -668,10 +705,10 @@ export const Dashboard = () => {
 
                       </div>
 
-                      {/* Month Label Pill */}
+                      {/* Month/Week Label Pill */}
                       <div className="mt-1 flex flex-col items-center">
-                        <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-lg transition-colors ${
-                          isCurrentMonth 
+                        <span className={`text-[10px] sm:text-[11px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-lg transition-colors whitespace-nowrap ${
+                          isCurrent 
                             ? 'bg-primary text-on-primary shadow-2xs' 
                             : isHovered 
                             ? 'bg-primary/15 text-primary' 
@@ -679,6 +716,11 @@ export const Dashboard = () => {
                         }`}>
                           {m.mes}
                         </span>
+                        {m.subLabel && (
+                          <span className="text-[9px] font-mono text-outline font-semibold mt-0.5 hidden sm:block">
+                            {m.subLabel}
+                          </span>
+                        )}
                       </div>
 
                     </div>
@@ -694,7 +736,11 @@ export const Dashboard = () => {
           <div className="pt-3.5 border-t border-surface-variant/70 flex flex-col sm:flex-row justify-between items-center gap-2 text-xs">
             <div className="flex items-center gap-2 text-on-surface-variant text-[11px]">
               <span className="material-symbols-outlined text-[16px] text-primary">analytics</span>
-              <span>Passe o mouse sobre as barras para inspecionar os detalhes de cada mês.</span>
+              <span>
+                {chartViewMode === 'mes'
+                  ? 'Exibindo balanço consolidado mensal dos últimos 6 meses.'
+                  : 'Exibindo movimentação semanal das últimas 6 semanas.'}
+              </span>
             </div>
             <div className="flex items-center gap-2 font-bold">
               <span className="text-on-surface-variant text-[11px]">Saldo Consolidado do Período:</span>
