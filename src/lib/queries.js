@@ -363,32 +363,31 @@ export const fetchDashboardData = async () => {
     }
   }
 
-  // Calculate weekly slots for the last 6 weeks
-  const currentDay = now.getDay()
-  const distanceToMonday = currentDay === 0 ? -6 : 1 - currentDay
-  const mondayThisWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMonday)
-  mondayThisWeek.setHours(0, 0, 0, 0)
+  // Calculate daily slots for the current week (Segunda a Domingo)
+  const currentDayOfWeek = now.getDay() // 0 = Domingo, 1 = Segunda...
+  const distanceToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
+  const mondayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + distanceToMonday)
+  mondayDate.setHours(0, 0, 0, 0)
 
-  const weeklySummary = []
-  for (let i = 5; i >= 0; i--) {
-    const weekStart = new Date(mondayThisWeek)
-    weekStart.setDate(mondayThisWeek.getDate() - (i * 7))
-    const weekEnd = new Date(weekStart)
-    weekEnd.setDate(weekStart.getDate() + 6)
-    weekEnd.setHours(23, 59, 59, 999)
+  const dayLabels = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+  const dayNamesFull = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado', 'Domingo']
+  const todayStr = now.toISOString().split('T')[0]
 
-    const startDay = String(weekStart.getDate()).padStart(2, '0')
-    const startMonth = weekStart.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').trim()
-    const endDay = String(weekEnd.getDate()).padStart(2, '0')
-    const endMonth = weekEnd.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').trim()
+  const dailyWeeklySummary = []
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(mondayDate)
+    dayDate.setDate(mondayDate.getDate() + i)
+    const dateStr = dayDate.toISOString().split('T')[0]
+    const dayNum = String(dayDate.getDate()).padStart(2, '0')
+    const monthNum = String(dayDate.getMonth() + 1).padStart(2, '0')
+    const isToday = dateStr === todayStr
 
-    weeklySummary.push({
-      index: 5 - i,
-      weekStartStr: weekStart.toISOString().split('T')[0],
-      weekEndStr: weekEnd.toISOString().split('T')[0],
-      label: i === 0 ? 'Esta Sem' : `Sem ${6 - i}`,
-      shortLabel: `${startDay}/${String(weekStart.getMonth() + 1).padStart(2, '0')}`,
-      mesCompleto: `Semana de ${startDay}/${String(weekStart.getMonth() + 1).padStart(2, '0')} a ${endDay}/${String(weekEnd.getMonth() + 1).padStart(2, '0')}`,
+    dailyWeeklySummary.push({
+      dateStr,
+      label: dayLabels[i],
+      shortDate: `${dayNum}/${monthNum}`,
+      fullLabel: `${dayNamesFull[i]} (${dayNum}/${monthNum})`,
+      isToday,
       entradas: 0,
       saidas: 0
     })
@@ -414,11 +413,11 @@ export const fetchDashboardData = async () => {
           if (item.tipo === 'saida') monthlySummary[monthKey].saidas += val
         }
 
-        // Weekly bucket
-        weeklySummary.forEach(w => {
-          if (itemDate >= w.weekStartStr && itemDate <= w.weekEndStr) {
-            if (item.tipo === 'entrada') w.entradas += val
-            if (item.tipo === 'saida') w.saidas += val
+        // Daily week bucket (Segunda a Domingo)
+        dailyWeeklySummary.forEach(d => {
+          if (itemDate === d.dateStr) {
+            if (item.tipo === 'entrada') d.entradas += val
+            if (item.tipo === 'saida') d.saidas += val
           }
         })
       })
@@ -439,14 +438,15 @@ export const fetchDashboardData = async () => {
       saldo: monthlySummary[key].entradas - monthlySummary[key].saidas
     }))
 
-  const historicoSemanal = weeklySummary.map(w => ({
-    key: w.weekStartStr,
-    mes: w.label,
-    subLabel: w.shortLabel,
-    mesCompleto: w.mesCompleto,
-    entradas: w.entradas,
-    saidas: w.saidas,
-    saldo: w.entradas - w.saidas
+  const historicoSemanal = dailyWeeklySummary.map(d => ({
+    key: d.dateStr,
+    mes: d.label,
+    subLabel: d.shortDate,
+    mesCompleto: d.fullLabel,
+    isToday: d.isToday,
+    entradas: d.entradas,
+    saidas: d.saidas,
+    saldo: d.entradas - d.saidas
   }))
 
   let beneficiariosRecentes = []

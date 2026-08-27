@@ -533,11 +533,11 @@ export const Dashboard = () => {
                 </div>
                 <h3 className="font-bold text-primary text-base">Movimentação Financeira</h3>
                 <span className="text-[10px] font-bold text-on-surface-variant bg-surface-container-low px-2 py-0.5 rounded-full border border-outline-variant/60">
-                  {chartViewMode === 'mes' ? 'Últimos 6 meses' : 'Últimas 6 semanas'}
+                  {chartViewMode === 'mes' ? 'Últimos 6 meses' : 'Esta Semana (Seg a Dom)'}
                 </span>
               </div>
               <p className="text-xs text-on-surface-variant mt-1">
-                {chartViewMode === 'mes' ? 'Comparativo mensal consolidado de entradas e saídas.' : 'Acompanhamento semanal detalhado de receitas e despesas.'}
+                {chartViewMode === 'mes' ? 'Comparativo mensal consolidado de entradas e saídas.' : 'Acompanhamento diário detalhado de segunda a domingo.'}
               </p>
             </div>
 
@@ -566,7 +566,7 @@ export const Dashboard = () => {
                       : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[14px]">date_range</span>
+                  <span className="material-symbols-outlined text-[14px]">today</span>
                   Semanal
                 </button>
               </div>
@@ -616,20 +616,20 @@ export const Dashboard = () => {
                 <div className="w-full border-t-2 border-outline-variant/80"></div>
               </div>
 
-              {/* Columns Grid (6 months or 6 weeks) */}
-              <div className="grid grid-cols-6 gap-1 sm:gap-2.5 h-[190px] z-10 items-end pb-6">
+              {/* Columns Grid: 6 columns for months, 7 columns for days of week */}
+              <div className={`grid ${chartViewMode === 'mes' ? 'grid-cols-6' : 'grid-cols-7'} gap-1 sm:gap-2 h-[190px] z-10 items-end pb-6`}>
                 {(activeChartData || []).map((m, idx) => {
                   const entradaPct = maxGraphVal > 0 ? (m.entradas / maxGraphVal) * 100 : 0
                   const saidaPct = maxGraphVal > 0 ? (m.saidas / maxGraphVal) * 100 : 0
                   const isHovered = activeTooltipMonth === idx
-                  const isCurrent = idx === (activeChartData.length - 1)
+                  const isCurrent = m.isToday || (chartViewMode === 'mes' && idx === (activeChartData.length - 1))
 
                   return (
                     <div 
                       key={idx} 
                       onMouseEnter={() => setActiveTooltipMonth(idx)}
                       onMouseLeave={() => setActiveTooltipMonth(null)}
-                      className={`flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all duration-200 rounded-2xl p-1 ${
+                      className={`flex flex-col items-center justify-end h-full relative cursor-pointer group transition-all duration-200 rounded-2xl p-0.5 sm:p-1 ${
                         isHovered ? 'bg-primary/5 shadow-2xs' : 'hover:bg-surface-container-lowest'
                       }`}
                     >
@@ -641,7 +641,7 @@ export const Dashboard = () => {
                             <span>{m.mesCompleto || m.mes}</span>
                             {isCurrent && (
                               <span className="text-[9px] bg-primary text-on-primary px-1.5 py-0.2 rounded font-bold">
-                                {chartViewMode === 'mes' ? 'Mês Atual' : 'Esta Semana'}
+                                {chartViewMode === 'mes' ? 'Mês Atual' : 'Hoje'}
                               </span>
                             )}
                           </div>
@@ -667,10 +667,10 @@ export const Dashboard = () => {
                       )}
 
                       {/* Bars Pair Container */}
-                      <div className="flex gap-1 sm:gap-2 items-end h-[145px] w-full justify-center pb-1">
+                      <div className="flex gap-1 sm:gap-1.5 items-end h-[145px] w-full justify-center pb-1">
                         
                         {/* Entrada Bar (Primary Olive Green) */}
-                        <div className="flex flex-col items-center h-full justify-end w-3 sm:w-4 md:w-5">
+                        <div className="flex flex-col items-center h-full justify-end w-2.5 sm:w-3.5 md:w-4.5">
                           {m.entradas > 0 && (
                             <span className="text-[9px] font-mono font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
                               {formatCurrencyShort(m.entradas)}
@@ -687,7 +687,7 @@ export const Dashboard = () => {
                         </div>
 
                         {/* Saida Bar (Secondary Terracotta Earth) */}
-                        <div className="flex flex-col items-center h-full justify-end w-3 sm:w-4 md:w-5">
+                        <div className="flex flex-col items-center h-full justify-end w-2.5 sm:w-3.5 md:w-4.5">
                           {m.saidas > 0 && (
                             <span className="text-[9px] font-mono font-bold text-secondary opacity-0 group-hover:opacity-100 transition-opacity mb-1 hidden sm:block">
                               {formatCurrencyShort(m.saidas)}
@@ -705,7 +705,7 @@ export const Dashboard = () => {
 
                       </div>
 
-                      {/* Month/Week Label Pill */}
+                      {/* Month/Day Label Pill */}
                       <div className="mt-1 flex flex-col items-center">
                         <span className={`text-[10px] sm:text-[11px] font-extrabold px-1.5 sm:px-2 py-0.5 rounded-lg transition-colors whitespace-nowrap ${
                           isCurrent 
@@ -717,7 +717,7 @@ export const Dashboard = () => {
                           {m.mes}
                         </span>
                         {m.subLabel && (
-                          <span className="text-[9px] font-mono text-outline font-semibold mt-0.5 hidden sm:block">
+                          <span className="text-[8px] sm:text-[9px] font-mono text-outline font-semibold mt-0.5 hidden sm:block">
                             {m.subLabel}
                           </span>
                         )}
@@ -739,7 +739,7 @@ export const Dashboard = () => {
               <span>
                 {chartViewMode === 'mes'
                   ? 'Exibindo balanço consolidado mensal dos últimos 6 meses.'
-                  : 'Exibindo movimentação semanal das últimas 6 semanas.'}
+                  : 'Exibindo movimentação diária da semana atual (Segunda a Domingo).'}
               </span>
             </div>
             <div className="flex items-center gap-2 font-bold">
