@@ -606,7 +606,11 @@ export const Aluguel = () => {
       doc.setFontSize(10)
       doc.setTextColor(30, 30, 30)
 
-      const bodyText = `Recebemos de ${c.locatario_nome || 'Beneficiário'}, CPF: ${c.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos:`
+      const destTextPdf = c.destinatario_tipo === 'outro' && c.destinatario_nome
+        ? ` (em benefício do paciente ${c.destinatario_nome}${c.destinatario_parentesco ? ` - ${c.destinatario_parentesco}` : ''})`
+        : ''
+
+      const bodyText = `Recebemos de ${c.locatario_nome || 'Beneficiário'}, CPF: ${c.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
       const splitBody = doc.splitTextToSize(bodyText, 182)
       doc.text(splitBody, 14, 68)
 
@@ -828,6 +832,18 @@ export const Aluguel = () => {
   }
 
   const filteredContracts = contracts.filter(c => {
+    if (search) {
+      const s = search.toLowerCase()
+      const matchLocatario = (c.locatario_nome || '').toLowerCase().includes(s)
+      const matchEndereco = (c.imovel_endereco || '').toLowerCase().includes(s)
+      const matchCpf = (c.locatario_cpf || '').includes(s)
+      const matchDestNome = (c.destinatario_nome || '').toLowerCase().includes(s)
+      const matchDestCpf = (c.destinatario_cpf || '').includes(s)
+      if (!matchLocatario && !matchEndereco && !matchCpf && !matchDestNome && !matchDestCpf) {
+        return false
+      }
+    }
+
     if (statusFilter === 'todos') return true;
     
     // Status filter logic
@@ -1091,6 +1107,18 @@ export const Aluguel = () => {
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1 items-start">
                             <Link to={`/aluguel/${c.id}`} className="font-semibold text-primary hover:underline block">{c.locatario_nome}</Link>
+                            
+                            {/* Destinatário / Paciente Final */}
+                            {c.destinatario_tipo === 'outro' && c.destinatario_nome && (
+                              <div 
+                                className="flex items-center gap-1 text-[11px] text-emerald-800 bg-emerald-50/90 px-2 py-0.5 rounded-md border border-emerald-200"
+                                title={`Equipamento alocado para o paciente: ${c.destinatario_nome} (${c.destinatario_parentesco || 'Paciente'})`}
+                              >
+                                <span className="material-symbols-outlined text-[13px] text-emerald-700">personal_injury</span>
+                                <span>Para: <strong>{c.destinatario_nome}</strong>{c.destinatario_parentesco ? ` (${c.destinatario_parentesco})` : ''}</span>
+                              </div>
+                            )}
+
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[10px] text-on-surface-variant font-mono">Retirada: {formatDate(c.data_inicio)}</span>
                               {parseFloat(c.valor_caucao || '0') > 0 && (
@@ -1177,6 +1205,9 @@ export const Aluguel = () => {
                                       caucaoPago: c.caucao_pago,
                                       formaCaucao: c.forma_pagamento_caucao,
                                       locatarioNome: c.locatario_nome,
+                                      destinatarioTipo: c.destinatario_tipo,
+                                      destinatarioNome: c.destinatario_nome,
+                                      destinatarioParentesco: c.destinatario_parentesco,
                                       top,
                                       left,
                                       placement
@@ -1808,6 +1839,17 @@ export const Aluguel = () => {
             </span>
           </div>
 
+          {/* Recipient info badge in Tooltip */}
+          {activeTooltip.destinatarioTipo === 'outro' && activeTooltip.destinatarioNome && (
+            <div className="mb-2.5 p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-emerald-700 shrink-0">personal_injury</span>
+              <div className="min-w-0">
+                <span className="text-[9px] font-extrabold uppercase tracking-wider block text-emerald-700">Paciente / Usuário:</span>
+                <span className="font-bold block truncate">{activeTooltip.destinatarioNome} {activeTooltip.destinatarioParentesco ? `(${activeTooltip.destinatarioParentesco})` : ''}</span>
+              </div>
+            </div>
+          )}
+
           <ul className="space-y-1.5 text-xs max-h-56 overflow-y-auto pr-0.5 relative z-10">
             {activeTooltip.itemsList.map((it, idx) => (
               <li key={idx} className="flex justify-between items-start gap-2 bg-surface-container-low/90 p-2.5 rounded-xl border border-outline-variant/60">
@@ -1858,38 +1900,38 @@ export const Aluguel = () => {
             {/* Modal Controls Header */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-surface-variant pb-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                  <span className="material-symbols-outlined text-[22px]">security</span>
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold">
+                  <span className="material-symbols-outlined text-[24px]">security</span>
                 </div>
                 <div>
                   <h3 className="font-bold text-on-surface text-base">Recibo de Caução de Garantia</h3>
-                  <p className="text-xs text-on-surface-variant font-mono">
-                    Nº: CAUCAO-{(caucaoReceiptModal.contract.id || '0000').substring(0, 8).toUpperCase()}
+                  <p className="text-xs text-on-surface-variant">
+                    Comprovante oficial de depósito de segurança para devolução futura.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                <button
-                  type="button"
-                  onClick={() => handlePrintCaucaoReceipt(caucaoReceiptModal.contract)}
-                  className="px-3.5 py-2 bg-surface-container-low hover:bg-surface-container text-on-surface border border-outline-variant/80 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 active:scale-95"
-                >
-                  <span className="material-symbols-outlined text-[16px]">print</span>
-                  Imprimir
-                </button>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleDownloadCaucaoReceiptPDF(caucaoReceiptModal.contract)}
-                  className="px-3.5 py-2 bg-amber-700 text-white hover:bg-amber-800 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
+                  className="px-4 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 active:scale-95"
                 >
                   <span className="material-symbols-outlined text-[16px]">download</span>
                   Baixar PDF
                 </button>
                 <button
                   type="button"
+                  onClick={() => handlePrintCaucaoReceipt(caucaoReceiptModal.contract)}
+                  className="px-4 py-2 bg-amber-50 text-amber-900 hover:bg-amber-100 border border-amber-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[16px]">print</span>
+                  Imprimir
+                </button>
+                <button
+                  type="button"
                   onClick={() => setCaucaoReceiptModal({ isOpen: false, contract: null })}
-                  className="p-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-xl transition-colors"
+                  className="p-1.5 text-on-surface-variant hover:text-on-surface hover:bg-surface-container rounded-xl transition-colors"
                 >
                   <span className="material-symbols-outlined text-[20px]">close</span>
                 </button>
@@ -1935,7 +1977,11 @@ export const Aluguel = () => {
               {/* Body */}
               <div className="space-y-4 text-xs md:text-sm text-on-surface leading-relaxed">
                 <p>
-                  Recebemos de <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_nome}</strong>, CPF sob nº <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_cpf || 'Não informado'}</strong>, a quantia de <strong>{numberToWords(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}), paga via <strong>{caucaoReceiptModal.contract.forma_pagamento_caucao || caucaoReceiptModal.contract.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong>.
+                  Recebemos de <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_nome}</strong>, CPF sob nº <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_cpf || 'Não informado'}</strong>
+                  {caucaoReceiptModal.contract.destinatario_tipo === 'outro' && caucaoReceiptModal.contract.destinatario_nome && (
+                    <span> (em benefício do paciente <strong className="text-on-surface">{caucaoReceiptModal.contract.destinatario_nome}</strong>{caucaoReceiptModal.contract.destinatario_parentesco ? ` - ${caucaoReceiptModal.contract.destinatario_parentesco}` : ''})</span>
+                  )}
+                  , a quantia de <strong>{numberToWords(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}), paga via <strong>{caucaoReceiptModal.contract.forma_pagamento_caucao || caucaoReceiptModal.contract.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong>.
                 </p>
 
                 {/* Items */}

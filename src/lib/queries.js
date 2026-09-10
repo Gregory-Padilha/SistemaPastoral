@@ -921,7 +921,7 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
     const { data, error } = await query.order('locatario_nome')
     if (error) throw error
     
-    // Parse itens and caucao for each contract returned in list
+    // Parse itens, caucao and destinatario for each contract returned in list
     const parsedList = (data || []).map(aluguel => {
       let parsedItens = []
       if (Array.isArray(aluguel.itens) && aluguel.itens.length > 0) {
@@ -961,6 +961,17 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
         } catch (_) {}
       }
 
+      // Parse destinatario fallback from observacoes if needed
+      let parsedDest = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--DESTINATARIO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--DESTINATARIO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedDest = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
       const valorCaucao = aluguel.valor_caucao !== undefined && aluguel.valor_caucao !== null
         ? parseFloat(aluguel.valor_caucao)
         : (parseFloat(parsedCaucao.valor_caucao || '0'))
@@ -973,6 +984,13 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
       const dataCaucao = aluguel.data_caucao || parsedCaucao.data_caucao || aluguel.data_inicio || ''
       const obsCaucao = aluguel.caucao_observacoes || parsedCaucao.caucao_observacoes || ''
 
+      const destTipo = aluguel.destinatario_tipo || parsedDest.destinatario_tipo || 'proprio'
+      const destNome = aluguel.destinatario_nome || parsedDest.destinatario_nome || ''
+      const destCpf = aluguel.destinatario_cpf || parsedDest.destinatario_cpf || ''
+      const destTel = aluguel.destinatario_telefone || parsedDest.destinatario_telefone || ''
+      const destParentesco = aluguel.destinatario_parentesco || parsedDest.destinatario_parentesco || ''
+      const destObs = aluguel.destinatario_observacoes || parsedDest.destinatario_observacoes || ''
+
       return {
         ...aluguel,
         itens: parsedItens,
@@ -980,7 +998,13 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
         caucao_pago: caucaoPago,
         forma_pagamento_caucao: formaCaucao,
         data_caucao: dataCaucao,
-        caucao_observacoes: obsCaucao
+        caucao_observacoes: obsCaucao,
+        destinatario_tipo: destTipo,
+        destinatario_nome: destNome,
+        destinatario_cpf: destCpf,
+        destinatario_telefone: destTel,
+        destinatario_parentesco: destParentesco,
+        destinatario_observacoes: destObs
       }
     })
 
@@ -1054,6 +1078,24 @@ export const fetchAluguelById = async (id) => {
       aluguel.forma_pagamento_caucao = aluguel.forma_pagamento_caucao || parsedCaucao.forma_pagamento_caucao || 'PIX'
       aluguel.data_caucao = aluguel.data_caucao || parsedCaucao.data_caucao || aluguel.data_inicio || ''
       aluguel.caucao_observacoes = aluguel.caucao_observacoes || parsedCaucao.caucao_observacoes || ''
+
+      // Parse destinatario fallback
+      let parsedDest = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--DESTINATARIO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--DESTINATARIO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedDest = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
+      aluguel.destinatario_tipo = aluguel.destinatario_tipo || parsedDest.destinatario_tipo || 'proprio'
+      aluguel.destinatario_nome = aluguel.destinatario_nome || parsedDest.destinatario_nome || ''
+      aluguel.destinatario_cpf = aluguel.destinatario_cpf || parsedDest.destinatario_cpf || ''
+      aluguel.destinatario_telefone = aluguel.destinatario_telefone || parsedDest.destinatario_telefone || ''
+      aluguel.destinatario_parentesco = aluguel.destinatario_parentesco || parsedDest.destinatario_parentesco || ''
+      aluguel.destinatario_observacoes = aluguel.destinatario_observacoes || parsedDest.destinatario_observacoes || ''
     }
 
     return aluguel
@@ -1070,7 +1112,7 @@ export const insertAluguel = async (aluguelData) => {
     // Prepare clean payload
     const payload = { ...aluguelData }
     
-    // Check if itens / caucao columns are supported or embed in observacoes
+    // Check if itens / caucao / destinatario columns are supported or embed in observacoes
     let data = null
     let insertError = null
 
@@ -1086,8 +1128,13 @@ export const insertAluguel = async (aluguelData) => {
       insertError = e
     }
 
-    // Fallback if columns 'itens' or 'valor_caucao' do not exist in database schema yet
-    if (insertError && (insertError.code === '42703' || insertError.message?.includes('itens') || insertError.message?.includes('caucao'))) {
+    // Fallback if columns do not exist in database schema yet
+    if (insertError && (
+      insertError.code === '42703' || 
+      insertError.message?.includes('itens') || 
+      insertError.message?.includes('caucao') || 
+      insertError.message?.includes('destinatario')
+    )) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
       delete fallbackPayload.valor_caucao
@@ -1095,6 +1142,12 @@ export const insertAluguel = async (aluguelData) => {
       delete fallbackPayload.forma_pagamento_caucao
       delete fallbackPayload.data_caucao
       delete fallbackPayload.caucao_observacoes
+      delete fallbackPayload.destinatario_tipo
+      delete fallbackPayload.destinatario_nome
+      delete fallbackPayload.destinatario_cpf
+      delete fallbackPayload.destinatario_telefone
+      delete fallbackPayload.destinatario_parentesco
+      delete fallbackPayload.destinatario_observacoes
       
       const caucaoObj = {
         valor_caucao: aluguelData.valor_caucao || 0,
@@ -1104,7 +1157,16 @@ export const insertAluguel = async (aluguelData) => {
         caucao_observacoes: aluguelData.caucao_observacoes || ''
       }
 
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->`
+      const destObj = {
+        destinatario_tipo: aluguelData.destinatario_tipo || 'proprio',
+        destinatario_nome: aluguelData.destinatario_nome || '',
+        destinatario_cpf: aluguelData.destinatario_cpf || '',
+        destinatario_telefone: aluguelData.destinatario_telefone || '',
+        destinatario_parentesco: aluguelData.destinatario_parentesco || '',
+        destinatario_observacoes: aluguelData.destinatario_observacoes || ''
+      }
+
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->`
       fallbackPayload.observacoes = (fallbackPayload.observacoes || '') + embeddedMetadata
 
       const retryRes = await supabase
@@ -1183,8 +1245,13 @@ export const updateAluguel = async (id, aluguelData) => {
       updateError = e
     }
 
-    // Fallback if column 'itens' or 'valor_caucao' does not exist in database yet
-    if (updateError && (updateError.code === '42703' || updateError.message?.includes('itens') || updateError.message?.includes('caucao'))) {
+    // Fallback if columns do not exist in database yet
+    if (updateError && (
+      updateError.code === '42703' || 
+      updateError.message?.includes('itens') || 
+      updateError.message?.includes('caucao') ||
+      updateError.message?.includes('destinatario')
+    )) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
       delete fallbackPayload.valor_caucao
@@ -1192,6 +1259,12 @@ export const updateAluguel = async (id, aluguelData) => {
       delete fallbackPayload.forma_pagamento_caucao
       delete fallbackPayload.data_caucao
       delete fallbackPayload.caucao_observacoes
+      delete fallbackPayload.destinatario_tipo
+      delete fallbackPayload.destinatario_nome
+      delete fallbackPayload.destinatario_cpf
+      delete fallbackPayload.destinatario_telefone
+      delete fallbackPayload.destinatario_parentesco
+      delete fallbackPayload.destinatario_observacoes
       
       const caucaoObj = {
         valor_caucao: aluguelData.valor_caucao || 0,
@@ -1201,12 +1274,22 @@ export const updateAluguel = async (id, aluguelData) => {
         caucao_observacoes: aluguelData.caucao_observacoes || ''
       }
 
+      const destObj = {
+        destinatario_tipo: aluguelData.destinatario_tipo || 'proprio',
+        destinatario_nome: aluguelData.destinatario_nome || '',
+        destinatario_cpf: aluguelData.destinatario_cpf || '',
+        destinatario_telefone: aluguelData.destinatario_telefone || '',
+        destinatario_parentesco: aluguelData.destinatario_parentesco || '',
+        destinatario_observacoes: aluguelData.destinatario_observacoes || ''
+      }
+
       // Clean previous embedded metadata and append updated one
       let cleanObs = (fallbackPayload.observacoes || '')
         .replace(/<!--ITENS_JSON:.*?-->/g, '')
         .replace(/<!--CAUCAO_JSON:.*?-->/g, '')
+        .replace(/<!--DESTINATARIO_JSON:.*?-->/g, '')
         .trim()
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->`
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->`
       fallbackPayload.observacoes = cleanObs + embeddedMetadata
 
       const retryRes = await supabase

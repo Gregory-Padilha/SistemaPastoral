@@ -41,6 +41,10 @@ export const AluguelForm = () => {
   const [formData, setFormData] = useState({
     locatario_nome: '', locatario_cpf: '',
     locatario_telefone: '', locatario_whatsapp: '', locatario_email: '',
+    destinatario_tipo: 'proprio', // 'proprio' | 'outro'
+    destinatario_nome: '', destinatario_cpf: '',
+    destinatario_telefone: '', destinatario_parentesco: '',
+    destinatario_observacoes: '',
     imovel_endereco: '', imovel_tipo: 'Cadeira de Rodas', imovel_descricao: '',
     valor_aluguel: '0', data_inicio: new Date().toISOString().split('T')[0], data_fim: '',
     dia_vencimento: '1', forma_pagamento: 'Doação',
@@ -57,6 +61,7 @@ export const AluguelForm = () => {
   const [equipamentos, setEquipamentos] = useState([])
   const [beneficiariosList, setBeneficiariosList] = useState([])
   const [selectedBeneficiarioId, setSelectedBeneficiarioId] = useState('')
+  const [selectedDestinatarioBenefId, setSelectedDestinatarioBenefId] = useState('')
 
   // Payment/Contribution log states
   const [pagamentos, setPagamentos] = useState([])
@@ -97,6 +102,12 @@ export const AluguelForm = () => {
         locatario_telefone: data.locatario_telefone || '',
         locatario_whatsapp: data.locatario_whatsapp || '',
         locatario_email: data.locatario_email || '',
+        destinatario_tipo: data.destinatario_tipo || 'proprio',
+        destinatario_nome: data.destinatario_nome || '',
+        destinatario_cpf: data.destinatario_cpf || '',
+        destinatario_telefone: data.destinatario_telefone || '',
+        destinatario_parentesco: data.destinatario_parentesco || '',
+        destinatario_observacoes: data.destinatario_observacoes || '',
         imovel_endereco: data.imovel_endereco || '',
         imovel_tipo: data.imovel_tipo || 'Cadeira de Rodas',
         imovel_descricao: data.imovel_descricao || '',
@@ -165,9 +176,9 @@ export const AluguelForm = () => {
     const { name, value } = e.target
     let formattedValue = value
 
-    if (name === 'locatario_cpf') {
+    if (name === 'locatario_cpf' || name === 'destinatario_cpf') {
       formattedValue = maskCPF(value)
-    } else if (name === 'locatario_telefone' || name === 'locatario_whatsapp') {
+    } else if (name === 'locatario_telefone' || name === 'locatario_whatsapp' || name === 'destinatario_telefone') {
       formattedValue = maskPhone(value)
     }
 
@@ -183,7 +194,7 @@ export const AluguelForm = () => {
     }
   }
 
-  // Beneficiary quick-fill
+  // Beneficiary quick-fill for Locatário
   const handleSelectBeneficiario = (e) => {
     const bId = e.target.value
     setSelectedBeneficiarioId(bId)
@@ -199,7 +210,26 @@ export const AluguelForm = () => {
         locatario_whatsapp: b.whatsapp ? maskPhone(b.whatsapp) : (b.telefone ? maskPhone(b.telefone) : prev.locatario_whatsapp),
         locatario_email: b.email || prev.locatario_email
       }))
-      showToast('Dados preenchidos', `Dados de ${b.nome} carregados com sucesso!`, 'success')
+      showToast('Dados preenchidos', `Dados de ${b.nome} carregados como locatário!`, 'success')
+    }
+  }
+
+  // Beneficiary quick-fill for Destinatário (Paciente)
+  const handleSelectDestinatarioBenef = (e) => {
+    const bId = e.target.value
+    setSelectedDestinatarioBenefId(bId)
+    if (!bId) return
+
+    const b = beneficiariosList.find(item => item.id === bId)
+    if (b) {
+      setFormData(prev => ({
+        ...prev,
+        destinatario_nome: b.nome || prev.destinatario_nome,
+        destinatario_cpf: b.cpf ? maskCPF(b.cpf) : prev.destinatario_cpf,
+        destinatario_telefone: b.telefone ? maskPhone(b.telefone) : (b.whatsapp ? maskPhone(b.whatsapp) : prev.destinatario_telefone),
+        destinatario_observacoes: b.observacoes || prev.destinatario_observacoes
+      }))
+      showToast('Dados preenchidos', `Dados de ${b.nome} carregados para o paciente/destinatário!`, 'success')
     }
   }
 
@@ -315,7 +345,10 @@ export const AluguelForm = () => {
 
     // Validations
     const missing = []
-    if (!formData.locatario_nome.trim()) missing.push('Nome do Locatário / Beneficiário')
+    if (!formData.locatario_nome.trim()) missing.push('Nome do Locatário / Responsável')
+    if (formData.destinatario_tipo === 'outro' && !formData.destinatario_nome?.trim()) {
+      missing.push('Nome do Paciente / Usuário do Equipamento')
+    }
     
     // Check if all items have a name or stock item selected
     const invalidItems = itens.some(it => !it.nome_equipamento?.trim() && !it.equipamento_id)
@@ -329,8 +362,13 @@ export const AluguelForm = () => {
     }
 
     if (formData.locatario_cpf && !validateCPF(formData.locatario_cpf)) {
-      showToast('CPF Inválido', 'Por favor, confira os números do CPF.', 'error')
+      showToast('CPF Inválido', 'Por favor, confira os números do CPF do locatário.', 'error')
       setCpfError(true)
+      return
+    }
+
+    if (formData.destinatario_tipo === 'outro' && formData.destinatario_cpf && !validateCPF(formData.destinatario_cpf)) {
+      showToast('CPF do Destinatário Inválido', 'Por favor, confira os números do CPF informado para o paciente/destinatário.', 'error')
       return
     }
 
@@ -367,7 +405,13 @@ export const AluguelForm = () => {
         caucao_pago: formData.caucao_pago,
         forma_pagamento_caucao: formData.forma_pagamento_caucao || 'PIX',
         data_caucao: formData.data_caucao || formData.data_inicio || new Date().toISOString().split('T')[0],
-        caucao_observacoes: formData.caucao_observacoes || ''
+        caucao_observacoes: formData.caucao_observacoes || '',
+        destinatario_tipo: formData.destinatario_tipo || 'proprio',
+        destinatario_nome: formData.destinatario_nome || '',
+        destinatario_cpf: formData.destinatario_cpf || '',
+        destinatario_telefone: formData.destinatario_telefone || '',
+        destinatario_parentesco: formData.destinatario_parentesco || '',
+        destinatario_observacoes: formData.destinatario_observacoes || ''
       }
 
       if (isEdit) {
@@ -531,7 +575,11 @@ export const AluguelForm = () => {
       doc.setFontSize(10)
       doc.setTextColor(30, 30, 30)
 
-      const bodyText = `Recebemos de ${formData.locatario_nome || 'Beneficiário'}, CPF: ${formData.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${formData.forma_pagamento_caucao || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos:`
+      const destTextPdf = formData.destinatario_tipo === 'outro' && formData.destinatario_nome
+        ? ` (em benefício do paciente ${formData.destinatario_nome}${formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})`
+        : ''
+
+      const bodyText = `Recebemos de ${formData.locatario_nome || 'Beneficiário'}, CPF: ${formData.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${formData.forma_pagamento_caucao || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
       const splitBody = doc.splitTextToSize(bodyText, 182)
       doc.text(splitBody, 14, 68)
 
@@ -1077,7 +1125,7 @@ export const AluguelForm = () => {
             </div>
 
             {/* ======================================================== */}
-            {/* SEÇÃO 3: DADOS DO LOCATÁRIO / BENEFICIÁRIO */}
+            {/* SEÇÃO 3: DADOS DO LOCATÁRIO & DESTINATÁRIO */}
             {/* ======================================================== */}
             <div className="bg-surface rounded-2xl border border-outline-variant/80 shadow-sm p-6 md:p-8 space-y-6">
               
@@ -1087,14 +1135,14 @@ export const AluguelForm = () => {
                     <span className="material-symbols-outlined text-[22px]">person</span>
                   </div>
                   <div>
-                    <h3 className="text-primary font-bold text-lg">3. Locatário / Beneficiário</h3>
+                    <h3 className="text-primary font-bold text-lg">3. Locatário / Responsável</h3>
                     <p className="text-xs text-on-surface-variant">
-                      Identificação de quem está retirando os equipamentos na pastoral.
+                      Identificação de quem está retirando e respondendo pelo equipamento na pastoral.
                     </p>
                   </div>
                 </div>
 
-                {/* Selecionar de Beneficiários Cadastrados */}
+                {/* Selecionar de Beneficiários Cadastrados para Locatário */}
                 {beneficiariosList.length > 0 && (
                   <div className="w-full sm:w-auto">
                     <select
@@ -1102,7 +1150,7 @@ export const AluguelForm = () => {
                       onChange={handleSelectBeneficiario}
                       className="w-full sm:w-64 px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-xl text-xs font-semibold text-primary focus:border-primary outline-none"
                     >
-                      <option value="">🔍 Buscar Beneficiário Cadastrado...</option>
+                      <option value="">🔍 Buscar Locatário Cadastrado...</option>
                       {beneficiariosList.map(b => (
                         <option key={b.id} value={b.id}>
                           {b.nome} {b.cpf ? `(${b.cpf})` : ''}
@@ -1113,11 +1161,12 @@ export const AluguelForm = () => {
                 )}
               </div>
 
+              {/* Campos do Locatário */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                 
                 {/* Nome Completo */}
                 <div className="md:col-span-7 space-y-1">
-                  <label className="block text-xs font-bold text-on-surface">Nome Completo *</label>
+                  <label className="block text-xs font-bold text-on-surface">Nome do Locatário / Responsável *</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
                       badge
@@ -1136,7 +1185,7 @@ export const AluguelForm = () => {
 
                 {/* CPF */}
                 <div className="md:col-span-5 space-y-1">
-                  <label className="block text-xs font-bold text-on-surface">CPF</label>
+                  <label className="block text-xs font-bold text-on-surface">CPF do Locatário</label>
                   <div className="relative">
                     <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
                       fingerprint
@@ -1196,6 +1245,237 @@ export const AluguelForm = () => {
                   </div>
                 </div>
 
+              </div>
+
+              {/* ======================================================== */}
+              {/* SUB-SEÇÃO: PARA QUEM É ESTE EQUIPAMENTO */}
+              {/* ======================================================== */}
+              <div className="pt-5 border-t border-surface-variant/80 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="block text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">accessibility_new</span>
+                      Destinação do Equipamento *
+                    </span>
+                    <p className="text-xs text-on-surface-variant mt-0.5">
+                      Informe se o equipamento será utilizado pela própria pessoa que está retirando ou por outra pessoa.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Radio Cards Selector */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* Opção 1: Para ela mesma */}
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, destinatario_tipo: 'proprio' }))}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-3 select-none ${
+                      formData.destinatario_tipo === 'proprio'
+                        ? 'border-primary bg-primary/5 shadow-xs'
+                        : 'border-outline-variant/60 bg-surface hover:border-outline-variant hover:bg-surface-container-lowest'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                      formData.destinatario_tipo === 'proprio'
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-outline text-transparent'
+                    }`}>
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 font-bold text-xs md:text-sm text-on-surface">
+                        <span className="material-symbols-outlined text-[18px] text-primary">person</span>
+                        <span>Para ele(a) mesmo(a)</span>
+                      </div>
+                      <p className="text-[11px] text-on-surface-variant leading-tight">
+                        O próprio locatário ({formData.locatario_nome ? formData.locatario_nome.split(' ')[0] : 'responsável'}) é quem utilizará o equipamento.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Opção 2: Para outra pessoa */}
+                  <div
+                    onClick={() => setFormData(prev => ({ ...prev, destinatario_tipo: 'outro' }))}
+                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-3 select-none ${
+                      formData.destinatario_tipo === 'outro'
+                        ? 'border-primary bg-primary/5 shadow-xs'
+                        : 'border-outline-variant/60 bg-surface hover:border-outline-variant hover:bg-surface-container-lowest'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                      formData.destinatario_tipo === 'outro'
+                        ? 'border-primary bg-primary text-on-primary'
+                        : 'border-outline text-transparent'
+                    }`}>
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
+                    </div>
+
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-1.5 font-bold text-xs md:text-sm text-on-surface">
+                        <span className="material-symbols-outlined text-[18px] text-primary">personal_injury</span>
+                        <span>Para outra pessoa (Paciente / Terceiro)</span>
+                      </div>
+                      <p className="text-[11px] text-on-surface-variant leading-tight">
+                        O equipamento é para um familiar, paciente acamado, idoso, dependente ou vizinho.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Campos da Outra Pessoa (quando destinatario_tipo === 'outro') */}
+                {formData.destinatario_tipo === 'outro' && (
+                  <div className="mt-4 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-surface to-surface p-5 md:p-6 space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-primary/20 pb-3 gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center font-bold">
+                          <span className="material-symbols-outlined text-[18px]">personal_injury</span>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-primary text-sm">
+                            Dados do Paciente / Usuário do Equipamento
+                          </h4>
+                          <p className="text-[11px] text-on-surface-variant">
+                            Preencha quem vai fazer o uso real dos itens retirados.
+                          </p>
+                        </div>
+                      </div>
+
+                      {beneficiariosList.length > 0 && (
+                        <div className="w-full sm:w-auto">
+                          <select
+                            value={selectedDestinatarioBenefId}
+                            onChange={handleSelectDestinatarioBenef}
+                            className="w-full sm:w-60 px-3 py-1.5 bg-surface border border-outline-variant rounded-xl text-xs font-semibold text-primary focus:border-primary outline-none"
+                          >
+                            <option value="">🔍 Puxar de Beneficiários...</option>
+                            {beneficiariosList.map(b => (
+                              <option key={b.id} value={b.id}>
+                                {b.nome} {b.cpf ? `(${b.cpf})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                      
+                      {/* Nome do Paciente/Destinatário */}
+                      <div className="md:col-span-7 space-y-1">
+                        <label className="block text-xs font-bold text-on-surface">
+                          Nome do Paciente / Usuário do Equipamento *
+                        </label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                            person_heart
+                          </span>
+                          <input
+                            type="text"
+                            name="destinatario_nome"
+                            required={formData.destinatario_tipo === 'outro'}
+                            value={formData.destinatario_nome}
+                            onChange={handleInputChange}
+                            placeholder="Ex: Maria das Dores Silva"
+                            className="w-full pl-9 pr-4 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Grau de Parentesco / Relação */}
+                      <div className="md:col-span-5 space-y-1">
+                        <label className="block text-xs font-bold text-on-surface">
+                          Parentesco / Relação com Locatário
+                        </label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                            diversity_1
+                          </span>
+                          <input
+                            type="text"
+                            name="destinatario_parentesco"
+                            value={formData.destinatario_parentesco}
+                            onChange={handleInputChange}
+                            placeholder="Ex: Mãe, Filho(a), Esposa, Vizinho..."
+                            className="w-full pl-9 pr-4 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                          />
+                        </div>
+                        {/* Quick preset chips */}
+                        <div className="flex flex-wrap gap-1 pt-1">
+                          {['Mãe/Pai', 'Filho(a)', 'Cônjuge', 'Irmão(ã)', 'Neto(a)', 'Vizinho(a)', 'Paciente'].map((chip) => (
+                            <button
+                              key={chip}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, destinatario_parentesco: chip }))}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-all ${
+                                formData.destinatario_parentesco === chip
+                                  ? 'bg-primary text-on-primary border-primary'
+                                  : 'bg-surface border-outline-variant/60 text-on-surface-variant hover:border-primary/40'
+                              }`}
+                            >
+                              {chip}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* CPF do Paciente/Destinatário */}
+                      <div className="md:col-span-6 space-y-1">
+                        <label className="block text-xs font-bold text-on-surface">
+                          CPF do Paciente / Destinatário (Opcional)
+                        </label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                            fingerprint
+                          </span>
+                          <input
+                            type="text"
+                            name="destinatario_cpf"
+                            value={formData.destinatario_cpf}
+                            onChange={handleInputChange}
+                            placeholder="000.000.000-00"
+                            className="w-full pl-9 pr-4 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Telefone / WhatsApp do Destinatário */}
+                      <div className="md:col-span-6 space-y-1">
+                        <label className="block text-xs font-bold text-on-surface">
+                          Telefone / Contato do Paciente (Opcional)
+                        </label>
+                        <div className="relative">
+                          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                            call
+                          </span>
+                          <input
+                            type="text"
+                            name="destinatario_telefone"
+                            value={formData.destinatario_telefone}
+                            onChange={handleInputChange}
+                            placeholder="(00) 00000-0000"
+                            className="w-full pl-9 pr-4 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Condição / Observações do Paciente */}
+                      <div className="md:col-span-12 space-y-1">
+                        <label className="block text-xs font-bold text-on-surface">
+                          Condição de Saúde / Motivo do Uso (Opcional)
+                        </label>
+                        <input
+                          type="text"
+                          name="destinatario_observacoes"
+                          value={formData.destinatario_observacoes}
+                          onChange={handleInputChange}
+                          placeholder="Ex: Paciente acamado, pós-operatório de fêmur, em reabilitação motora..."
+                          className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1621,7 +1901,11 @@ export const AluguelForm = () => {
               </div>
 
               <p>
-                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || '---'}</strong>, a quantia supra de <strong className="text-slate-900">{numberToWords(selectedReceiptPayment.valor_pago)}</strong>, referente ao empréstimo/aluguel dos equipamentos descritos abaixo, correspondente à: <strong className="text-slate-900">{selectedReceiptPayment.mes_referencia}</strong>.
+                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || '---'}</strong>
+                {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
+                  <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})</span>
+                )}
+                , a quantia supra de <strong className="text-slate-900">{numberToWords(selectedReceiptPayment.valor_pago)}</strong>, referente ao empréstimo/aluguel dos equipamentos descritos abaixo, correspondente à: <strong className="text-slate-900">{selectedReceiptPayment.mes_referencia}</strong>.
               </p>
 
               {/* Items Table in Receipt */}
@@ -1664,7 +1948,10 @@ export const AluguelForm = () => {
               <div className="flex flex-col items-center">
                 <div className="w-full border-t border-dashed border-slate-400 max-w-[220px] mb-2"></div>
                 <span className="text-xs font-semibold text-slate-700">{formData.locatario_nome}</span>
-                <span className="text-[10px] text-slate-500">Locatário / Beneficiário</span>
+                <span className="text-[10px] text-slate-500">
+                  Locatário / Responsável
+                  {formData.destinatario_tipo === 'outro' && formData.destinatario_nome ? ` (por ${formData.destinatario_nome})` : ''}
+                </span>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-full border-t border-dashed border-slate-400 max-w-[220px] mb-2"></div>
@@ -1746,7 +2033,11 @@ export const AluguelForm = () => {
               </div>
 
               <p>
-                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || 'Não informado'}</strong>, a quantia de <strong className="text-slate-900">{numberToWords(parseFloat(formData.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(formData.valor_caucao || '0'))}), paga via <strong className="text-slate-900">{formData.forma_pagamento_caucao || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
+                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || 'Não informado'}</strong>
+                {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
+                  <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})</span>
+                )}
+                , a quantia de <strong className="text-slate-900">{numberToWords(parseFloat(formData.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(formData.valor_caucao || '0'))}), paga via <strong className="text-slate-900">{formData.forma_pagamento_caucao || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
               </p>
 
               {/* Items Table in Receipt */}
