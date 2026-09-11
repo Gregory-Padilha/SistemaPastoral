@@ -10,7 +10,7 @@ import {
 } from '../lib/queries'
 import { useFeedback } from '../contexts/FeedbackContext'
 import { mapSupabaseError } from '../lib/errorMapper'
-import { maskCPF, maskPhone, validateCPF } from '../utils/masks'
+import { maskCPF, maskPhone, maskCEP, validateCPF } from '../utils/masks'
 import { jsPDF } from 'jspdf'
 
 const createNewItem = (preset = {}) => ({
@@ -41,10 +41,14 @@ export const AluguelForm = () => {
   const [formData, setFormData] = useState({
     locatario_nome: '', locatario_cpf: '',
     locatario_telefone: '', locatario_whatsapp: '', locatario_email: '',
+    locatario_cep: '', locatario_rua: '', locatario_numero: '',
+    locatario_complemento: '', locatario_bairro: '', locatario_cidade: '', locatario_estado: '',
     destinatario_tipo: 'proprio', // 'proprio' | 'outro'
     destinatario_nome: '', destinatario_cpf: '',
     destinatario_telefone: '', destinatario_parentesco: '',
     destinatario_observacoes: '',
+    destinatario_cep: '', destinatario_rua: '', destinatario_numero: '',
+    destinatario_complemento: '', destinatario_bairro: '', destinatario_cidade: '', destinatario_estado: '',
     imovel_endereco: '', imovel_tipo: 'Cadeira de Rodas', imovel_descricao: '',
     valor_aluguel: '0', data_inicio: new Date().toISOString().split('T')[0], data_fim: '',
     dia_vencimento: '1', forma_pagamento: 'Doação',
@@ -102,12 +106,26 @@ export const AluguelForm = () => {
         locatario_telefone: data.locatario_telefone || '',
         locatario_whatsapp: data.locatario_whatsapp || '',
         locatario_email: data.locatario_email || '',
+        locatario_cep: data.locatario_cep || '',
+        locatario_rua: data.locatario_rua || '',
+        locatario_numero: data.locatario_numero || '',
+        locatario_complemento: data.locatario_complemento || '',
+        locatario_bairro: data.locatario_bairro || '',
+        locatario_cidade: data.locatario_cidade || '',
+        locatario_estado: data.locatario_estado || '',
         destinatario_tipo: data.destinatario_tipo || 'proprio',
         destinatario_nome: data.destinatario_nome || '',
         destinatario_cpf: data.destinatario_cpf || '',
         destinatario_telefone: data.destinatario_telefone || '',
         destinatario_parentesco: data.destinatario_parentesco || '',
         destinatario_observacoes: data.destinatario_observacoes || '',
+        destinatario_cep: data.destinatario_cep || '',
+        destinatario_rua: data.destinatario_rua || '',
+        destinatario_numero: data.destinatario_numero || '',
+        destinatario_complemento: data.destinatario_complemento || '',
+        destinatario_bairro: data.destinatario_bairro || '',
+        destinatario_cidade: data.destinatario_cidade || '',
+        destinatario_estado: data.destinatario_estado || '',
         imovel_endereco: data.imovel_endereco || '',
         imovel_tipo: data.imovel_tipo || 'Cadeira de Rodas',
         imovel_descricao: data.imovel_descricao || '',
@@ -180,6 +198,8 @@ export const AluguelForm = () => {
       formattedValue = maskCPF(value)
     } else if (name === 'locatario_telefone' || name === 'locatario_whatsapp' || name === 'destinatario_telefone') {
       formattedValue = maskPhone(value)
+    } else if (name === 'locatario_cep' || name === 'destinatario_cep') {
+      formattedValue = maskCEP(value)
     }
 
     setFormData(prev => ({ ...prev, [name]: formattedValue }))
@@ -192,6 +212,49 @@ export const AluguelForm = () => {
     } else {
       setCpfError(false)
     }
+  }
+
+  // Automatic ViaCEP lookup on blur
+  const handleCepBlur = async (type = 'locatario') => {
+    const rawCep = type === 'locatario' ? formData.locatario_cep : formData.destinatario_cep
+    const cleanCep = (rawCep || '').replace(/\D/g, '')
+    if (cleanCep.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`)
+        const data = await res.json()
+        if (!data.erro) {
+          setFormData(prev => ({
+            ...prev,
+            [`${type}_rua`]: data.logradouro || prev[`${type}_rua`],
+            [`${type}_bairro`]: data.bairro || prev[`${type}_bairro`],
+            [`${type}_cidade`]: data.localidade || prev[`${type}_cidade`],
+            [`${type}_estado`]: data.uf || prev[`${type}_estado`]
+          }))
+          showToast('Endereço Localizado', `${data.logradouro}, ${data.bairro} - ${data.localidade}/${data.uf}`, 'success')
+        }
+      } catch (err) {
+        console.warn('ViaCEP lookup failed:', err)
+      }
+    }
+  }
+
+  // Copy Locatário address to Destinatário (Paciente)
+  const handleCopyLocatarioAddress = () => {
+    if (!formData.locatario_rua && !formData.locatario_cep) {
+      showToast('Aviso', 'Preencha primeiro o endereço do locatário/responsável.', 'info')
+      return
+    }
+    setFormData(prev => ({
+      ...prev,
+      destinatario_cep: prev.locatario_cep,
+      destinatario_rua: prev.locatario_rua,
+      destinatario_numero: prev.locatario_numero,
+      destinatario_complemento: prev.locatario_complemento,
+      destinatario_bairro: prev.locatario_bairro,
+      destinatario_cidade: prev.locatario_cidade,
+      destinatario_estado: prev.locatario_estado
+    }))
+    showToast('Endereço Copiado', 'O endereço do responsável foi copiado para o paciente!', 'success')
   }
 
   // Beneficiary quick-fill for Locatário
@@ -208,9 +271,16 @@ export const AluguelForm = () => {
         locatario_cpf: b.cpf ? maskCPF(b.cpf) : prev.locatario_cpf,
         locatario_telefone: b.telefone ? maskPhone(b.telefone) : prev.locatario_telefone,
         locatario_whatsapp: b.whatsapp ? maskPhone(b.whatsapp) : (b.telefone ? maskPhone(b.telefone) : prev.locatario_whatsapp),
-        locatario_email: b.email || prev.locatario_email
+        locatario_email: b.email || prev.locatario_email,
+        locatario_cep: b.cep ? maskCEP(b.cep) : prev.locatario_cep,
+        locatario_rua: b.rua || prev.locatario_rua,
+        locatario_numero: b.numero || prev.locatario_numero,
+        locatario_complemento: b.complemento || prev.locatario_complemento,
+        locatario_bairro: b.bairro || prev.locatario_bairro,
+        locatario_cidade: b.cidade || prev.locatario_cidade,
+        locatario_estado: b.estado || prev.locatario_estado
       }))
-      showToast('Dados preenchidos', `Dados de ${b.nome} carregados como locatário!`, 'success')
+      showToast('Dados preenchidos', `Dados e endereço de ${b.nome} carregados como locatário!`, 'success')
     }
   }
 
@@ -227,9 +297,16 @@ export const AluguelForm = () => {
         destinatario_nome: b.nome || prev.destinatario_nome,
         destinatario_cpf: b.cpf ? maskCPF(b.cpf) : prev.destinatario_cpf,
         destinatario_telefone: b.telefone ? maskPhone(b.telefone) : (b.whatsapp ? maskPhone(b.whatsapp) : prev.destinatario_telefone),
-        destinatario_observacoes: b.observacoes || prev.destinatario_observacoes
+        destinatario_observacoes: b.observacoes || prev.destinatario_observacoes,
+        destinatario_cep: b.cep ? maskCEP(b.cep) : prev.destinatario_cep,
+        destinatario_rua: b.rua || prev.destinatario_rua,
+        destinatario_numero: b.numero || prev.destinatario_numero,
+        destinatario_complemento: b.complemento || prev.destinatario_complemento,
+        destinatario_bairro: b.bairro || prev.destinatario_bairro,
+        destinatario_cidade: b.cidade || prev.destinatario_cidade,
+        destinatario_estado: b.estado || prev.destinatario_estado
       }))
-      showToast('Dados preenchidos', `Dados de ${b.nome} carregados para o paciente/destinatário!`, 'success')
+      showToast('Dados preenchidos', `Dados e endereço de ${b.nome} carregados para o paciente/destinatário!`, 'success')
     }
   }
 
@@ -411,7 +488,21 @@ export const AluguelForm = () => {
         destinatario_cpf: formData.destinatario_cpf || '',
         destinatario_telefone: formData.destinatario_telefone || '',
         destinatario_parentesco: formData.destinatario_parentesco || '',
-        destinatario_observacoes: formData.destinatario_observacoes || ''
+        destinatario_observacoes: formData.destinatario_observacoes || '',
+        locatario_cep: formData.locatario_cep || null,
+        locatario_rua: formData.locatario_rua || null,
+        locatario_numero: formData.locatario_numero || null,
+        locatario_complemento: formData.locatario_complemento || null,
+        locatario_bairro: formData.locatario_bairro || null,
+        locatario_cidade: formData.locatario_cidade || null,
+        locatario_estado: formData.locatario_estado || null,
+        destinatario_cep: formData.destinatario_cep || null,
+        destinatario_rua: formData.destinatario_rua || null,
+        destinatario_numero: formData.destinatario_numero || null,
+        destinatario_complemento: formData.destinatario_complemento || null,
+        destinatario_bairro: formData.destinatario_bairro || null,
+        destinatario_cidade: formData.destinatario_cidade || null,
+        destinatario_estado: formData.destinatario_estado || null
       }
 
       if (isEdit) {
@@ -575,11 +666,18 @@ export const AluguelForm = () => {
       doc.setFontSize(10)
       doc.setTextColor(30, 30, 30)
 
-      const destTextPdf = formData.destinatario_tipo === 'outro' && formData.destinatario_nome
-        ? ` (em benefício do paciente ${formData.destinatario_nome}${formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})`
+      const locEnderecoPdf = formData.locatario_rua 
+        ? `${formData.locatario_rua}${formData.locatario_numero ? ', nº ' + formData.locatario_numero : ''}${formData.locatario_bairro ? ' - ' + formData.locatario_bairro : ''}${formData.locatario_cidade ? ', ' + formData.locatario_cidade : ''}${formData.locatario_estado ? '/' + formData.locatario_estado : ''}` 
+        : ''
+      const destEnderecoPdf = formData.destinatario_rua 
+        ? `${formData.destinatario_rua}${formData.destinatario_numero ? ', nº ' + formData.destinatario_numero : ''}${formData.destinatario_bairro ? ' - ' + formData.destinatario_bairro : ''}${formData.destinatario_cidade ? ', ' + formData.destinatario_cidade : ''}${formData.destinatario_estado ? '/' + formData.destinatario_estado : ''}` 
         : ''
 
-      const bodyText = `Recebemos de ${formData.locatario_nome || 'Beneficiário'}, CPF: ${formData.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${formData.forma_pagamento_caucao || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
+      const destTextPdf = formData.destinatario_tipo === 'outro' && formData.destinatario_nome
+        ? ` (em benefício do paciente ${formData.destinatario_nome}${formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''}${destEnderecoPdf ? `, com endereço em: ${destEnderecoPdf}` : ''})`
+        : ''
+
+      const bodyText = `Recebemos de ${formData.locatario_nome || 'Beneficiário'}, CPF: ${formData.locatario_cpf || 'Não informado'}${locEnderecoPdf ? `, residente em ${locEnderecoPdf}` : ''}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${formData.forma_pagamento_caucao || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
       const splitBody = doc.splitTextToSize(bodyText, 182)
       doc.text(splitBody, 14, 68)
 
@@ -1245,6 +1343,122 @@ export const AluguelForm = () => {
                   </div>
                 </div>
 
+                {/* ======================================================== */}
+                {/* ENDEREÇO RESIDENCIAL DO LOCATÁRIO / RESPONSÁVEL */}
+                {/* ======================================================== */}
+                <div className="md:col-span-12 pt-3 mt-1 border-t border-surface-variant/70 space-y-3">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                    <span className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
+                      <span className="material-symbols-outlined text-[17px]">home_pin</span>
+                      Endereço do Locatário / Responsável
+                    </span>
+                    <span className="text-[11px] font-medium text-outline flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px] text-primary">bolt</span>
+                      Preenchimento automático por CEP
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                    {/* CEP */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">CEP</label>
+                      <div className="relative">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                          search
+                        </span>
+                        <input
+                          type="text"
+                          name="locatario_cep"
+                          value={formData.locatario_cep}
+                          onChange={handleInputChange}
+                          onBlur={() => handleCepBlur('locatario')}
+                          placeholder="00000-000"
+                          className="w-full pl-9 pr-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Logradouro / Rua */}
+                    <div className="md:col-span-6 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Logradouro (Rua, Avenida, Alameda)</label>
+                      <input
+                        type="text"
+                        name="locatario_rua"
+                        value={formData.locatario_rua}
+                        onChange={handleInputChange}
+                        placeholder="Ex: Rua das Palmeiras"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                      />
+                    </div>
+
+                    {/* Número */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Número</label>
+                      <input
+                        type="text"
+                        name="locatario_numero"
+                        value={formData.locatario_numero}
+                        onChange={handleInputChange}
+                        placeholder="123 ou S/N"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                      />
+                    </div>
+
+                    {/* Complemento */}
+                    <div className="md:col-span-4 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Complemento</label>
+                      <input
+                        type="text"
+                        name="locatario_complemento"
+                        value={formData.locatario_complemento}
+                        onChange={handleInputChange}
+                        placeholder="Apto 12, Bloco B, Casa fundos..."
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                      />
+                    </div>
+
+                    {/* Bairro */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Bairro</label>
+                      <input
+                        type="text"
+                        name="locatario_bairro"
+                        value={formData.locatario_bairro}
+                        onChange={handleInputChange}
+                        placeholder="Ex: Centro"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                      />
+                    </div>
+
+                    {/* Cidade */}
+                    <div className="md:col-span-3 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Cidade</label>
+                      <input
+                        type="text"
+                        name="locatario_cidade"
+                        value={formData.locatario_cidade}
+                        onChange={handleInputChange}
+                        placeholder="Cidade"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                      />
+                    </div>
+
+                    {/* Estado (UF) */}
+                    <div className="md:col-span-2 space-y-1">
+                      <label className="block text-xs font-bold text-on-surface">Estado (UF)</label>
+                      <input
+                        type="text"
+                        maxLength="2"
+                        name="locatario_estado"
+                        value={formData.locatario_estado}
+                        onChange={(e) => setFormData(prev => ({ ...prev, locatario_estado: e.target.value.toUpperCase() }))}
+                        placeholder="UF"
+                        className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-bold uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center"
+                      />
+                    </div>
+                  </div>
+                </div>
+
               </div>
 
               {/* ======================================================== */}
@@ -1288,7 +1502,7 @@ export const AluguelForm = () => {
                         <span>Para ele(a) mesmo(a)</span>
                       </div>
                       <p className="text-[11px] text-on-surface-variant leading-tight">
-                        O próprio locatário ({formData.locatario_nome ? formData.locatario_nome.split(' ')[0] : 'responsável'}) é quem utilizará o equipamento.
+                        O próprio locatário ({formData.locatario_nome ? formData.locatario_nome.split(' ')[0] : 'responsável'}) utilizará o equipamento em sua residência cadastrada.
                       </p>
                     </div>
                   </div>
@@ -1335,7 +1549,7 @@ export const AluguelForm = () => {
                             Dados do Paciente / Usuário do Equipamento
                           </h4>
                           <p className="text-[11px] text-on-surface-variant">
-                            Preencha quem vai fazer o uso real dos itens retirados.
+                            Preencha quem vai fazer o uso real dos itens retirados e o endereço onde o equipamento ficará.
                           </p>
                         </div>
                       </div>
@@ -1471,6 +1685,133 @@ export const AluguelForm = () => {
                           placeholder="Ex: Paciente acamado, pós-operatório de fêmur, em reabilitação motora..."
                           className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
                         />
+                      </div>
+
+                      {/* ======================================================== */}
+                      {/* ENDEREÇO DO PACIENTE / LOCAL DE USO DO EQUIPAMENTO */}
+                      {/* ======================================================== */}
+                      <div className="md:col-span-12 pt-3 border-t border-primary/20 space-y-3">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                          <div>
+                            <span className="text-xs font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
+                              <span className="material-symbols-outlined text-[17px]">location_on</span>
+                              Endereço do Paciente / Local onde ficará o equipamento
+                            </span>
+                            <p className="text-[11px] text-on-surface-variant">
+                              Informe onde o paciente reside ou onde o equipamento será mantido durante o uso.
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={handleCopyLocatarioAddress}
+                            className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs active:scale-95 shrink-0"
+                            title="Copiar os dados de endereço preenchidos no locatário acima"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">content_copy</span>
+                            Mesmo Endereço do Responsável
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+                          {/* CEP Destinatário */}
+                          <div className="md:col-span-3 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">CEP</label>
+                            <div className="relative">
+                              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">
+                                search
+                              </span>
+                              <input
+                                type="text"
+                                name="destinatario_cep"
+                                value={formData.destinatario_cep}
+                                onChange={handleInputChange}
+                                onBlur={() => handleCepBlur('destinatario')}
+                                placeholder="00000-000"
+                                className="w-full pl-9 pr-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-mono focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Logradouro / Rua Destinatário */}
+                          <div className="md:col-span-6 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Logradouro (Rua, Avenida)</label>
+                            <input
+                              type="text"
+                              name="destinatario_rua"
+                              value={formData.destinatario_rua}
+                              onChange={handleInputChange}
+                              placeholder="Ex: Rua São José"
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                            />
+                          </div>
+
+                          {/* Número Destinatário */}
+                          <div className="md:col-span-3 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Número</label>
+                            <input
+                              type="text"
+                              name="destinatario_numero"
+                              value={formData.destinatario_numero}
+                              onChange={handleInputChange}
+                              placeholder="123 ou S/N"
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                            />
+                          </div>
+
+                          {/* Complemento Destinatário */}
+                          <div className="md:col-span-4 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Complemento</label>
+                            <input
+                              type="text"
+                              name="destinatario_complemento"
+                              value={formData.destinatario_complemento}
+                              onChange={handleInputChange}
+                              placeholder="Apto, Casa 2, Quarto..."
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                            />
+                          </div>
+
+                          {/* Bairro Destinatário */}
+                          <div className="md:col-span-3 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Bairro</label>
+                            <input
+                              type="text"
+                              name="destinatario_bairro"
+                              value={formData.destinatario_bairro}
+                              onChange={handleInputChange}
+                              placeholder="Bairro"
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                            />
+                          </div>
+
+                          {/* Cidade Destinatário */}
+                          <div className="md:col-span-3 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Cidade</label>
+                            <input
+                              type="text"
+                              name="destinatario_cidade"
+                              value={formData.destinatario_cidade}
+                              onChange={handleInputChange}
+                              placeholder="Cidade"
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-medium focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/70"
+                            />
+                          </div>
+
+                          {/* Estado Destinatário */}
+                          <div className="md:col-span-2 space-y-1">
+                            <label className="block text-xs font-bold text-on-surface">Estado (UF)</label>
+                            <input
+                              type="text"
+                              maxLength="2"
+                              name="destinatario_estado"
+                              value={formData.destinatario_estado}
+                              onChange={(e) => setFormData(prev => ({ ...prev, destinatario_estado: e.target.value.toUpperCase() }))}
+                              placeholder="UF"
+                              className="w-full px-3.5 py-2.5 bg-surface border border-outline-variant rounded-xl text-xs md:text-sm font-bold uppercase focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-center"
+                            />
+                          </div>
+                        </div>
                       </div>
 
                     </div>
@@ -1900,13 +2241,27 @@ export const AluguelForm = () => {
                 <span className="text-xl font-bold text-primary">{formatCurrency(selectedReceiptPayment.valor_pago)}</span>
               </div>
 
-              <p>
-                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || '---'}</strong>
-                {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
-                  <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})</span>
-                )}
-                , a quantia supra de <strong className="text-slate-900">{numberToWords(selectedReceiptPayment.valor_pago)}</strong>, referente ao empréstimo/aluguel dos equipamentos descritos abaixo, correspondente à: <strong className="text-slate-900">{selectedReceiptPayment.mes_referencia}</strong>.
-              </p>
+              {(() => {
+                const locEndereco = formData.locatario_rua 
+                  ? `${formData.locatario_rua}${formData.locatario_numero ? ', nº ' + formData.locatario_numero : ''}${formData.locatario_bairro ? ' - ' + formData.locatario_bairro : ''}${formData.locatario_cidade ? ', ' + formData.locatario_cidade : ''}${formData.locatario_estado ? '/' + formData.locatario_estado : ''}` 
+                  : ''
+                const destEndereco = formData.destinatario_rua 
+                  ? `${formData.destinatario_rua}${formData.destinatario_numero ? ', nº ' + formData.destinatario_numero : ''}${formData.destinatario_bairro ? ' - ' + formData.destinatario_bairro : ''}${formData.destinatario_cidade ? ', ' + formData.destinatario_cidade : ''}${formData.destinatario_estado ? '/' + formData.destinatario_estado : ''}` 
+                  : ''
+
+                return (
+                  <p>
+                    Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || '---'}</strong>
+                    {locEndereco && (
+                      <span>, residente em <strong className="text-slate-900">{locEndereco}</strong></span>
+                    )}
+                    {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
+                      <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''}{destEndereco ? `, com endereço em: ${destEndereco}` : ''})</span>
+                    )}
+                    , a quantia supra de <strong className="text-slate-900">{numberToWords(selectedReceiptPayment.valor_pago)}</strong>, referente ao empréstimo/aluguel dos equipamentos descritos abaixo, correspondente à: <strong className="text-slate-900">{selectedReceiptPayment.mes_referencia}</strong>.
+                  </p>
+                )
+              })()}
 
               {/* Items Table in Receipt */}
               <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -2032,13 +2387,27 @@ export const AluguelForm = () => {
                 <span className="text-2xl font-black text-amber-900">{formatCurrency(parseFloat(formData.valor_caucao || '0'))}</span>
               </div>
 
-              <p>
-                Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || 'Não informado'}</strong>
-                {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
-                  <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''})</span>
-                )}
-                , a quantia de <strong className="text-slate-900">{numberToWords(parseFloat(formData.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(formData.valor_caucao || '0'))}), paga via <strong className="text-slate-900">{formData.forma_pagamento_caucao || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
-              </p>
+              {(() => {
+                const locEndereco = formData.locatario_rua 
+                  ? `${formData.locatario_rua}${formData.locatario_numero ? ', nº ' + formData.locatario_numero : ''}${formData.locatario_bairro ? ' - ' + formData.locatario_bairro : ''}${formData.locatario_cidade ? ', ' + formData.locatario_cidade : ''}${formData.locatario_estado ? '/' + formData.locatario_estado : ''}` 
+                  : ''
+                const destEndereco = formData.destinatario_rua 
+                  ? `${formData.destinatario_rua}${formData.destinatario_numero ? ', nº ' + formData.destinatario_numero : ''}${formData.destinatario_bairro ? ' - ' + formData.destinatario_bairro : ''}${formData.destinatario_cidade ? ', ' + formData.destinatario_cidade : ''}${formData.destinatario_estado ? '/' + formData.destinatario_estado : ''}` 
+                  : ''
+
+                return (
+                  <p>
+                    Recebemos de <strong className="text-slate-900">{formData.locatario_nome}</strong>, inscrito no CPF sob o nº <strong className="text-slate-900">{formData.locatario_cpf || 'Não informado'}</strong>
+                    {locEndereco && (
+                      <span>, residente em <strong className="text-slate-900">{locEndereco}</strong></span>
+                    )}
+                    {formData.destinatario_tipo === 'outro' && formData.destinatario_nome && (
+                      <span> (em benefício do paciente <strong className="text-slate-900">{formData.destinatario_nome}</strong>{formData.destinatario_parentesco ? ` - ${formData.destinatario_parentesco}` : ''}{destEndereco ? `, com endereço em: ${destEndereco}` : ''})</span>
+                    )}
+                    , a quantia de <strong className="text-slate-900">{numberToWords(parseFloat(formData.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(formData.valor_caucao || '0'))}), paga via <strong className="text-slate-900">{formData.forma_pagamento_caucao || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
+                  </p>
+                )
+              })()}
 
               {/* Items Table in Receipt */}
               <div className="border border-slate-200 rounded-xl overflow-hidden">

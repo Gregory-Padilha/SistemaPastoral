@@ -21,6 +21,14 @@ export const maskCPF = (value) => {
   return `${truncated.slice(0, 3)}.${truncated.slice(3, 6)}.${truncated.slice(6, 9)}-${truncated.slice(9)}`
 }
 
+// Format CEP: 00000-000
+export const maskCEP = (value) => {
+  if (!value) return ''
+  const cleanValue = value.replace(/\D/g, '').slice(0, 8)
+  if (cleanValue.length <= 5) return cleanValue
+  return `${cleanValue.slice(0, 5)}-${cleanValue.slice(5)}`
+}
+
 // Format Phone/WhatsApp: (99) 9 9999-9999 or (99) 9999-9999
 export const maskPhone = (value) => {
   if (!value) return ''

@@ -395,6 +395,22 @@ export const Aluguel = () => {
         </div>
       `
 
+    const locEnderecoParts = [
+      c.locatario_rua ? `${c.locatario_rua}${c.locatario_numero ? ', ' + c.locatario_numero : ''}` : '',
+      c.locatario_complemento ? `(${c.locatario_complemento})` : '',
+      c.locatario_bairro || '',
+      c.locatario_cidade ? `${c.locatario_cidade}${c.locatario_estado ? '/' + c.locatario_estado : ''}` : '',
+      c.locatario_cep ? `CEP: ${c.locatario_cep}` : ''
+    ].filter(Boolean).join(' - ')
+
+    const destEnderecoParts = [
+      c.destinatario_rua ? `${c.destinatario_rua}${c.destinatario_numero ? ', ' + c.destinatario_numero : ''}` : '',
+      c.destinatario_complemento ? `(${c.destinatario_complemento})` : '',
+      c.destinatario_bairro || '',
+      c.destinatario_cidade ? `${c.destinatario_cidade}${c.destinatario_estado ? '/' + c.destinatario_estado : ''}` : '',
+      c.destinatario_cep ? `CEP: ${c.destinatario_cep}` : ''
+    ].filter(Boolean).join(' - ')
+
     const printWindow = window.open('', '_blank');
     const html = `
       <html>
@@ -408,7 +424,7 @@ export const Aluguel = () => {
             .subtitle { font-size: 11px; color: #555; text-transform: uppercase; margin-top: 5px; font-weight: 600; letter-spacing: 0.5px; }
             .row { display: flex; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px dashed #c4d7b2; padding-bottom: 8px; font-size: 14px; }
             .label { font-weight: bold; color: #444; }
-            .value { color: #111; font-weight: 500; }
+            .value { color: #111; font-weight: 500; text-align: right; max-width: 65%; }
             .footer { margin-top: 40px; text-align: center; font-size: 13px; color: #555; }
             .signature-line { border-top: 1.5px solid #3d5a2a; width: 280px; margin: 0 auto; margin-top: 40px; }
             .signature-label { font-size: 11px; color: #666; margin-top: 6px; font-weight: 600; text-transform: uppercase; }
@@ -428,6 +444,18 @@ export const Aluguel = () => {
               <span class="label">CPF:</span>
               <span class="value">${c.locatario_cpf || 'Não Cadastrado'}</span>
             </div>
+            ${locEnderecoParts ? `
+            <div class="row">
+              <span class="label">Endereço do Responsável:</span>
+              <span class="value">${locEnderecoParts}</span>
+            </div>
+            ` : ''}
+            ${c.destinatario_tipo === 'outro' && c.destinatario_nome ? `
+            <div class="row" style="background-color: #f1f8ee; padding: 6px 10px; border-radius: 6px;">
+              <span class="label" style="color: #27401a;">Paciente / Usuário:</span>
+              <span class="value" style="color: #1b2e12;"><strong>${c.destinatario_nome}</strong> ${c.destinatario_parentesco ? `(${c.destinatario_parentesco})` : ''}${destEnderecoParts ? `<br><span style="font-size: 12px; font-weight: normal; color: #555;">Endereço: ${destEnderecoParts}</span>` : ''}</span>
+            </div>
+            ` : ''}
             ${itemsHtml}
             <div class="row">
               <span class="label">Mês de Referência:</span>
@@ -550,6 +578,22 @@ export const Aluguel = () => {
       const valorExtenso = numberToWords(parseFloat(c.valor_caucao || '0'))
       const dataFormatada = c.data_caucao ? new Date(c.data_caucao).toLocaleDateString('pt-BR') : (c.data_inicio ? new Date(c.data_inicio).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'))
 
+      const locEnderecoParts = [
+        c.locatario_rua ? `${c.locatario_rua}${c.locatario_numero ? ', ' + c.locatario_numero : ''}` : '',
+        c.locatario_complemento ? `(${c.locatario_complemento})` : '',
+        c.locatario_bairro || '',
+        c.locatario_cidade ? `${c.locatario_cidade}${c.locatario_estado ? '/' + c.locatario_estado : ''}` : '',
+        c.locatario_cep ? `CEP: ${c.locatario_cep}` : ''
+      ].filter(Boolean).join(' - ')
+
+      const destEnderecoParts = [
+        c.destinatario_rua ? `${c.destinatario_rua}${c.destinatario_numero ? ', ' + c.destinatario_numero : ''}` : '',
+        c.destinatario_complemento ? `(${c.destinatario_complemento})` : '',
+        c.destinatario_bairro || '',
+        c.destinatario_cidade ? `${c.destinatario_cidade}${c.destinatario_estado ? '/' + c.destinatario_estado : ''}` : '',
+        c.destinatario_cep ? `CEP: ${c.destinatario_cep}` : ''
+      ].filter(Boolean).join(' - ')
+
       // Extract items list
       let contractItens = []
       if (Array.isArray(c.itens) && c.itens.length > 0) {
@@ -607,10 +651,10 @@ export const Aluguel = () => {
       doc.setTextColor(30, 30, 30)
 
       const destTextPdf = c.destinatario_tipo === 'outro' && c.destinatario_nome
-        ? ` (em benefício do paciente ${c.destinatario_nome}${c.destinatario_parentesco ? ` - ${c.destinatario_parentesco}` : ''})`
+        ? ` (em benefício do paciente ${c.destinatario_nome}${c.destinatario_parentesco ? ` - ${c.destinatario_parentesco}` : ''}${destEnderecoParts ? `, residente à ${destEnderecoParts}` : ''})`
         : ''
 
-      const bodyText = `Recebemos de ${c.locatario_nome || 'Beneficiário'}, CPF: ${c.locatario_cpf || 'Não informado'}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
+      const bodyText = `Recebemos de ${c.locatario_nome || 'Beneficiário'}, CPF: ${c.locatario_cpf || 'Não informado'}${locEnderecoParts ? `, residente à ${locEnderecoParts}` : ''}, a quantia de ${valorExtenso} (${valorFormatado}), paga via ${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}, a título de CAUÇÃO DE GARANTIA pelo empréstimo e uso dos seguintes equipamentos${destTextPdf}:`
       const splitBody = doc.splitTextToSize(bodyText, 182)
       doc.text(splitBody, 14, 68)
 
@@ -694,6 +738,22 @@ export const Aluguel = () => {
     const numRecibo = (c.id || '0000').substring(0, 8).toUpperCase()
     const dataFormatada = c.data_caucao ? new Date(c.data_caucao).toLocaleDateString('pt-BR') : (c.data_inicio ? new Date(c.data_inicio).toLocaleDateString('pt-BR') : new Date().toLocaleDateString('pt-BR'))
 
+    const locEnderecoParts = [
+      c.locatario_rua ? `${c.locatario_rua}${c.locatario_numero ? ', ' + c.locatario_numero : ''}` : '',
+      c.locatario_complemento ? `(${c.locatario_complemento})` : '',
+      c.locatario_bairro || '',
+      c.locatario_cidade ? `${c.locatario_cidade}${c.locatario_estado ? '/' + c.locatario_estado : ''}` : '',
+      c.locatario_cep ? `CEP: ${c.locatario_cep}` : ''
+    ].filter(Boolean).join(' - ')
+
+    const destEnderecoParts = [
+      c.destinatario_rua ? `${c.destinatario_rua}${c.destinatario_numero ? ', ' + c.destinatario_numero : ''}` : '',
+      c.destinatario_complemento ? `(${c.destinatario_complemento})` : '',
+      c.destinatario_bairro || '',
+      c.destinatario_cidade ? `${c.destinatario_cidade}${c.destinatario_estado ? '/' + c.destinatario_estado : ''}` : '',
+      c.destinatario_cep ? `CEP: ${c.destinatario_cep}` : ''
+    ].filter(Boolean).join(' - ')
+
     // Extract items list
     let contractItens = []
     if (Array.isArray(c.itens) && c.itens.length > 0) {
@@ -764,7 +824,7 @@ export const Aluguel = () => {
             </div>
 
             <div class="body-text">
-              Recebemos de <strong>${c.locatario_nome}</strong>, CPF: <strong>${c.locatario_cpf || 'Não informado'}</strong>, a quantia de <strong>${valorExtenso}</strong> (R$ ${valorFormated}), paga via <strong>${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
+              Recebemos de <strong>${c.locatario_nome}</strong>, CPF: <strong>${c.locatario_cpf || 'Não informado'}</strong>${locEnderecoParts ? `, residente à <strong>${locEnderecoParts}</strong>` : ''}${c.destinatario_tipo === 'outro' && c.destinatario_nome ? ` (em benefício do paciente <strong>${c.destinatario_nome}</strong>${c.destinatario_parentesco ? ` - ${c.destinatario_parentesco}` : ''}${destEnderecoParts ? `, residente à ${destEnderecoParts}` : ''})` : ''}, a quantia de <strong>${valorExtenso}</strong> (R$ ${valorFormated}), paga via <strong>${c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong> pelo empréstimo e uso dos seguintes equipamentos:
             </div>
 
             <table class="items-table">
@@ -836,10 +896,16 @@ export const Aluguel = () => {
       const s = search.toLowerCase()
       const matchLocatario = (c.locatario_nome || '').toLowerCase().includes(s)
       const matchEndereco = (c.imovel_endereco || '').toLowerCase().includes(s)
+      const matchLocRua = (c.locatario_rua || '').toLowerCase().includes(s)
+      const matchLocBairro = (c.locatario_bairro || '').toLowerCase().includes(s)
+      const matchLocCidade = (c.locatario_cidade || '').toLowerCase().includes(s)
       const matchCpf = (c.locatario_cpf || '').includes(s)
       const matchDestNome = (c.destinatario_nome || '').toLowerCase().includes(s)
+      const matchDestRua = (c.destinatario_rua || '').toLowerCase().includes(s)
+      const matchDestBairro = (c.destinatario_bairro || '').toLowerCase().includes(s)
+      const matchDestCidade = (c.destinatario_cidade || '').toLowerCase().includes(s)
       const matchDestCpf = (c.destinatario_cpf || '').includes(s)
-      if (!matchLocatario && !matchEndereco && !matchCpf && !matchDestNome && !matchDestCpf) {
+      if (!matchLocatario && !matchEndereco && !matchLocRua && !matchLocBairro && !matchLocCidade && !matchCpf && !matchDestNome && !matchDestRua && !matchDestBairro && !matchDestCidade && !matchDestCpf) {
         return false
       }
     }
@@ -1205,9 +1271,11 @@ export const Aluguel = () => {
                                       caucaoPago: c.caucao_pago,
                                       formaCaucao: c.forma_pagamento_caucao,
                                       locatarioNome: c.locatario_nome,
+                                      locatarioEndereco: [c.locatario_rua, c.locatario_numero, c.locatario_bairro, c.locatario_cidade].filter(Boolean).join(', '),
                                       destinatarioTipo: c.destinatario_tipo,
                                       destinatarioNome: c.destinatario_nome,
                                       destinatarioParentesco: c.destinatario_parentesco,
+                                      destinatarioEndereco: [c.destinatario_rua, c.destinatario_numero, c.destinatario_bairro, c.destinatario_cidade].filter(Boolean).join(', '),
                                       top,
                                       left,
                                       placement
@@ -1839,6 +1907,14 @@ export const Aluguel = () => {
             </span>
           </div>
 
+          {/* Locatário Address in Tooltip */}
+          {activeTooltip.locatarioEndereco && (
+            <div className="mb-2 p-1.5 bg-surface-container/70 rounded-lg text-[10px] text-on-surface-variant flex items-center gap-1.5 border border-outline-variant/40 truncate">
+              <span className="material-symbols-outlined text-[13px] text-primary shrink-0">home</span>
+              <span className="truncate" title={activeTooltip.locatarioEndereco}>{activeTooltip.locatarioEndereco}</span>
+            </div>
+          )}
+
           {/* Recipient info badge in Tooltip */}
           {activeTooltip.destinatarioTipo === 'outro' && activeTooltip.destinatarioNome && (
             <div className="mb-2.5 p-2 bg-emerald-50 rounded-xl border border-emerald-200 text-emerald-900 text-xs flex items-center gap-2">
@@ -1846,6 +1922,9 @@ export const Aluguel = () => {
               <div className="min-w-0">
                 <span className="text-[9px] font-extrabold uppercase tracking-wider block text-emerald-700">Paciente / Usuário:</span>
                 <span className="font-bold block truncate">{activeTooltip.destinatarioNome} {activeTooltip.destinatarioParentesco ? `(${activeTooltip.destinatarioParentesco})` : ''}</span>
+                {activeTooltip.destinatarioEndereco && (
+                  <span className="text-[10px] text-emerald-800/80 block truncate font-medium">{activeTooltip.destinatarioEndereco}</span>
+                )}
               </div>
             </div>
           )}
@@ -1976,13 +2055,35 @@ export const Aluguel = () => {
 
               {/* Body */}
               <div className="space-y-4 text-xs md:text-sm text-on-surface leading-relaxed">
-                <p>
-                  Recebemos de <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_nome}</strong>, CPF sob nº <strong className="text-on-surface">{caucaoReceiptModal.contract.locatario_cpf || 'Não informado'}</strong>
-                  {caucaoReceiptModal.contract.destinatario_tipo === 'outro' && caucaoReceiptModal.contract.destinatario_nome && (
-                    <span> (em benefício do paciente <strong className="text-on-surface">{caucaoReceiptModal.contract.destinatario_nome}</strong>{caucaoReceiptModal.contract.destinatario_parentesco ? ` - ${caucaoReceiptModal.contract.destinatario_parentesco}` : ''})</span>
-                  )}
-                  , a quantia de <strong>{numberToWords(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(caucaoReceiptModal.contract.valor_caucao || '0'))}), paga via <strong>{caucaoReceiptModal.contract.forma_pagamento_caucao || caucaoReceiptModal.contract.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong>.
-                </p>
+                {(() => {
+                  const c = caucaoReceiptModal.contract
+                  const locEnd = [
+                    c.locatario_rua ? `${c.locatario_rua}${c.locatario_numero ? ', ' + c.locatario_numero : ''}` : '',
+                    c.locatario_complemento ? `(${c.locatario_complemento})` : '',
+                    c.locatario_bairro || '',
+                    c.locatario_cidade ? `${c.locatario_cidade}${c.locatario_estado ? '/' + c.locatario_estado : ''}` : '',
+                    c.locatario_cep ? `CEP: ${c.locatario_cep}` : ''
+                  ].filter(Boolean).join(' - ')
+
+                  const destEnd = [
+                    c.destinatario_rua ? `${c.destinatario_rua}${c.destinatario_numero ? ', ' + c.destinatario_numero : ''}` : '',
+                    c.destinatario_complemento ? `(${c.destinatario_complemento})` : '',
+                    c.destinatario_bairro || '',
+                    c.destinatario_cidade ? `${c.destinatario_cidade}${c.destinatario_estado ? '/' + c.destinatario_estado : ''}` : '',
+                    c.destinatario_cep ? `CEP: ${c.destinatario_cep}` : ''
+                  ].filter(Boolean).join(' - ')
+
+                  return (
+                    <p>
+                      Recebemos de <strong className="text-on-surface">{c.locatario_nome}</strong>, CPF sob nº <strong className="text-on-surface">{c.locatario_cpf || 'Não informado'}</strong>
+                      {locEnd && <span>, residente à <strong className="text-on-surface">{locEnd}</strong></span>}
+                      {c.destinatario_tipo === 'outro' && c.destinatario_nome && (
+                        <span> (em benefício do paciente <strong className="text-on-surface">{c.destinatario_nome}</strong>{c.destinatario_parentesco ? ` - ${c.destinatario_parentesco}` : ''}{destEnd ? `, residente à ${destEnd}` : ''})</span>
+                      )}
+                      , a quantia de <strong>{numberToWords(parseFloat(c.valor_caucao || '0'))}</strong> ({formatCurrency(parseFloat(c.valor_caucao || '0'))}), paga via <strong>{c.forma_pagamento_caucao || c.forma_pagamento || 'PIX'}</strong>, a título de <strong>CAUÇÃO DE GARANTIA</strong>.
+                    </p>
+                  )
+                })()}
 
                 {/* Items */}
                 <div className="bg-surface-container-lowest p-3.5 rounded-xl border border-outline-variant/60">

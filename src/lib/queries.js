@@ -972,6 +972,17 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
         } catch (_) {}
       }
 
+      // Parse locatario address fallback from observacoes if needed
+      let parsedLoc = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--LOCATARIO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--LOCATARIO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedLoc = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
       const valorCaucao = aluguel.valor_caucao !== undefined && aluguel.valor_caucao !== null
         ? parseFloat(aluguel.valor_caucao)
         : (parseFloat(parsedCaucao.valor_caucao || '0'))
@@ -991,6 +1002,24 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
       const destParentesco = aluguel.destinatario_parentesco || parsedDest.destinatario_parentesco || ''
       const destObs = aluguel.destinatario_observacoes || parsedDest.destinatario_observacoes || ''
 
+      // Locatário address fields
+      const locCep = aluguel.locatario_cep || parsedLoc.locatario_cep || ''
+      const locRua = aluguel.locatario_rua || parsedLoc.locatario_rua || ''
+      const locNumero = aluguel.locatario_numero || parsedLoc.locatario_numero || ''
+      const locComplemento = aluguel.locatario_complemento || parsedLoc.locatario_complemento || ''
+      const locBairro = aluguel.locatario_bairro || parsedLoc.locatario_bairro || ''
+      const locCidade = aluguel.locatario_cidade || parsedLoc.locatario_cidade || ''
+      const locEstado = aluguel.locatario_estado || parsedLoc.locatario_estado || ''
+
+      // Destinatário address fields
+      const destCep = aluguel.destinatario_cep || parsedDest.destinatario_cep || ''
+      const destRua = aluguel.destinatario_rua || parsedDest.destinatario_rua || ''
+      const destNumero = aluguel.destinatario_numero || parsedDest.destinatario_numero || ''
+      const destComplemento = aluguel.destinatario_complemento || parsedDest.destinatario_complemento || ''
+      const destBairro = aluguel.destinatario_bairro || parsedDest.destinatario_bairro || ''
+      const destCidade = aluguel.destinatario_cidade || parsedDest.destinatario_cidade || ''
+      const destEstado = aluguel.destinatario_estado || parsedDest.destinatario_estado || ''
+
       return {
         ...aluguel,
         itens: parsedItens,
@@ -1004,7 +1033,21 @@ export const fetchAlugueis = async (search = '', status = 'todos') => {
         destinatario_cpf: destCpf,
         destinatario_telefone: destTel,
         destinatario_parentesco: destParentesco,
-        destinatario_observacoes: destObs
+        destinatario_observacoes: destObs,
+        locatario_cep: locCep,
+        locatario_rua: locRua,
+        locatario_numero: locNumero,
+        locatario_complemento: locComplemento,
+        locatario_bairro: locBairro,
+        locatario_cidade: locCidade,
+        locatario_estado: locEstado,
+        destinatario_cep: destCep,
+        destinatario_rua: destRua,
+        destinatario_numero: destNumero,
+        destinatario_complemento: destComplemento,
+        destinatario_bairro: destBairro,
+        destinatario_cidade: destCidade,
+        destinatario_estado: destEstado
       }
     })
 
@@ -1090,12 +1133,39 @@ export const fetchAluguelById = async (id) => {
         } catch (_) {}
       }
 
+      // Parse locatario address fallback
+      let parsedLoc = {}
+      if (aluguel.observacoes && aluguel.observacoes.includes('<!--LOCATARIO_JSON:')) {
+        try {
+          const match = aluguel.observacoes.match(/<!--LOCATARIO_JSON:(.*?)-->/)
+          if (match && match[1]) {
+            parsedLoc = JSON.parse(match[1])
+          }
+        } catch (_) {}
+      }
+
       aluguel.destinatario_tipo = aluguel.destinatario_tipo || parsedDest.destinatario_tipo || 'proprio'
       aluguel.destinatario_nome = aluguel.destinatario_nome || parsedDest.destinatario_nome || ''
       aluguel.destinatario_cpf = aluguel.destinatario_cpf || parsedDest.destinatario_cpf || ''
       aluguel.destinatario_telefone = aluguel.destinatario_telefone || parsedDest.destinatario_telefone || ''
       aluguel.destinatario_parentesco = aluguel.destinatario_parentesco || parsedDest.destinatario_parentesco || ''
       aluguel.destinatario_observacoes = aluguel.destinatario_observacoes || parsedDest.destinatario_observacoes || ''
+
+      aluguel.locatario_cep = aluguel.locatario_cep || parsedLoc.locatario_cep || ''
+      aluguel.locatario_rua = aluguel.locatario_rua || parsedLoc.locatario_rua || ''
+      aluguel.locatario_numero = aluguel.locatario_numero || parsedLoc.locatario_numero || ''
+      aluguel.locatario_complemento = aluguel.locatario_complemento || parsedLoc.locatario_complemento || ''
+      aluguel.locatario_bairro = aluguel.locatario_bairro || parsedLoc.locatario_bairro || ''
+      aluguel.locatario_cidade = aluguel.locatario_cidade || parsedLoc.locatario_cidade || ''
+      aluguel.locatario_estado = aluguel.locatario_estado || parsedLoc.locatario_estado || ''
+
+      aluguel.destinatario_cep = aluguel.destinatario_cep || parsedDest.destinatario_cep || ''
+      aluguel.destinatario_rua = aluguel.destinatario_rua || parsedDest.destinatario_rua || ''
+      aluguel.destinatario_numero = aluguel.destinatario_numero || parsedDest.destinatario_numero || ''
+      aluguel.destinatario_complemento = aluguel.destinatario_complemento || parsedDest.destinatario_complemento || ''
+      aluguel.destinatario_bairro = aluguel.destinatario_bairro || parsedDest.destinatario_bairro || ''
+      aluguel.destinatario_cidade = aluguel.destinatario_cidade || parsedDest.destinatario_cidade || ''
+      aluguel.destinatario_estado = aluguel.destinatario_estado || parsedDest.destinatario_estado || ''
     }
 
     return aluguel
@@ -1112,7 +1182,7 @@ export const insertAluguel = async (aluguelData) => {
     // Prepare clean payload
     const payload = { ...aluguelData }
     
-    // Check if itens / caucao / destinatario columns are supported or embed in observacoes
+    // Check if itens / caucao / destinatario / address columns are supported or embed in observacoes
     let data = null
     let insertError = null
 
@@ -1133,7 +1203,8 @@ export const insertAluguel = async (aluguelData) => {
       insertError.code === '42703' || 
       insertError.message?.includes('itens') || 
       insertError.message?.includes('caucao') || 
-      insertError.message?.includes('destinatario')
+      insertError.message?.includes('destinatario') ||
+      insertError.message?.includes('locatario_')
     )) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
@@ -1148,6 +1219,20 @@ export const insertAluguel = async (aluguelData) => {
       delete fallbackPayload.destinatario_telefone
       delete fallbackPayload.destinatario_parentesco
       delete fallbackPayload.destinatario_observacoes
+      delete fallbackPayload.locatario_cep
+      delete fallbackPayload.locatario_rua
+      delete fallbackPayload.locatario_numero
+      delete fallbackPayload.locatario_complemento
+      delete fallbackPayload.locatario_bairro
+      delete fallbackPayload.locatario_cidade
+      delete fallbackPayload.locatario_estado
+      delete fallbackPayload.destinatario_cep
+      delete fallbackPayload.destinatario_rua
+      delete fallbackPayload.destinatario_numero
+      delete fallbackPayload.destinatario_complemento
+      delete fallbackPayload.destinatario_bairro
+      delete fallbackPayload.destinatario_cidade
+      delete fallbackPayload.destinatario_estado
       
       const caucaoObj = {
         valor_caucao: aluguelData.valor_caucao || 0,
@@ -1163,10 +1248,27 @@ export const insertAluguel = async (aluguelData) => {
         destinatario_cpf: aluguelData.destinatario_cpf || '',
         destinatario_telefone: aluguelData.destinatario_telefone || '',
         destinatario_parentesco: aluguelData.destinatario_parentesco || '',
-        destinatario_observacoes: aluguelData.destinatario_observacoes || ''
+        destinatario_observacoes: aluguelData.destinatario_observacoes || '',
+        destinatario_cep: aluguelData.destinatario_cep || '',
+        destinatario_rua: aluguelData.destinatario_rua || '',
+        destinatario_numero: aluguelData.destinatario_numero || '',
+        destinatario_complemento: aluguelData.destinatario_complemento || '',
+        destinatario_bairro: aluguelData.destinatario_bairro || '',
+        destinatario_cidade: aluguelData.destinatario_cidade || '',
+        destinatario_estado: aluguelData.destinatario_estado || ''
       }
 
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->`
+      const locObj = {
+        locatario_cep: aluguelData.locatario_cep || '',
+        locatario_rua: aluguelData.locatario_rua || '',
+        locatario_numero: aluguelData.locatario_numero || '',
+        locatario_complemento: aluguelData.locatario_complemento || '',
+        locatario_bairro: aluguelData.locatario_bairro || '',
+        locatario_cidade: aluguelData.locatario_cidade || '',
+        locatario_estado: aluguelData.locatario_estado || ''
+      }
+
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->\n<!--LOCATARIO_JSON:${JSON.stringify(locObj)}-->`
       fallbackPayload.observacoes = (fallbackPayload.observacoes || '') + embeddedMetadata
 
       const retryRes = await supabase
@@ -1250,7 +1352,8 @@ export const updateAluguel = async (id, aluguelData) => {
       updateError.code === '42703' || 
       updateError.message?.includes('itens') || 
       updateError.message?.includes('caucao') ||
-      updateError.message?.includes('destinatario')
+      updateError.message?.includes('destinatario') ||
+      updateError.message?.includes('locatario_')
     )) {
       const fallbackPayload = { ...payload }
       delete fallbackPayload.itens
@@ -1265,6 +1368,20 @@ export const updateAluguel = async (id, aluguelData) => {
       delete fallbackPayload.destinatario_telefone
       delete fallbackPayload.destinatario_parentesco
       delete fallbackPayload.destinatario_observacoes
+      delete fallbackPayload.locatario_cep
+      delete fallbackPayload.locatario_rua
+      delete fallbackPayload.locatario_numero
+      delete fallbackPayload.locatario_complemento
+      delete fallbackPayload.locatario_bairro
+      delete fallbackPayload.locatario_cidade
+      delete fallbackPayload.locatario_estado
+      delete fallbackPayload.destinatario_cep
+      delete fallbackPayload.destinatario_rua
+      delete fallbackPayload.destinatario_numero
+      delete fallbackPayload.destinatario_complemento
+      delete fallbackPayload.destinatario_bairro
+      delete fallbackPayload.destinatario_cidade
+      delete fallbackPayload.destinatario_estado
       
       const caucaoObj = {
         valor_caucao: aluguelData.valor_caucao || 0,
@@ -1280,7 +1397,24 @@ export const updateAluguel = async (id, aluguelData) => {
         destinatario_cpf: aluguelData.destinatario_cpf || '',
         destinatario_telefone: aluguelData.destinatario_telefone || '',
         destinatario_parentesco: aluguelData.destinatario_parentesco || '',
-        destinatario_observacoes: aluguelData.destinatario_observacoes || ''
+        destinatario_observacoes: aluguelData.destinatario_observacoes || '',
+        destinatario_cep: aluguelData.destinatario_cep || '',
+        destinatario_rua: aluguelData.destinatario_rua || '',
+        destinatario_numero: aluguelData.destinatario_numero || '',
+        destinatario_complemento: aluguelData.destinatario_complemento || '',
+        destinatario_bairro: aluguelData.destinatario_bairro || '',
+        destinatario_cidade: aluguelData.destinatario_cidade || '',
+        destinatario_estado: aluguelData.destinatario_estado || ''
+      }
+
+      const locObj = {
+        locatario_cep: aluguelData.locatario_cep || '',
+        locatario_rua: aluguelData.locatario_rua || '',
+        locatario_numero: aluguelData.locatario_numero || '',
+        locatario_complemento: aluguelData.locatario_complemento || '',
+        locatario_bairro: aluguelData.locatario_bairro || '',
+        locatario_cidade: aluguelData.locatario_cidade || '',
+        locatario_estado: aluguelData.locatario_estado || ''
       }
 
       // Clean previous embedded metadata and append updated one
@@ -1288,8 +1422,9 @@ export const updateAluguel = async (id, aluguelData) => {
         .replace(/<!--ITENS_JSON:.*?-->/g, '')
         .replace(/<!--CAUCAO_JSON:.*?-->/g, '')
         .replace(/<!--DESTINATARIO_JSON:.*?-->/g, '')
+        .replace(/<!--LOCATARIO_JSON:.*?-->/g, '')
         .trim()
-      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->`
+      const embeddedMetadata = `\n<!--ITENS_JSON:${JSON.stringify(itens)}-->\n<!--CAUCAO_JSON:${JSON.stringify(caucaoObj)}-->\n<!--DESTINATARIO_JSON:${JSON.stringify(destObj)}-->\n<!--LOCATARIO_JSON:${JSON.stringify(locObj)}-->`
       fallbackPayload.observacoes = cleanObs + embeddedMetadata
 
       const retryRes = await supabase

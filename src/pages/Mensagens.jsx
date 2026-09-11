@@ -127,7 +127,7 @@ export const Mensagens = () => {
           whatsapp: a.locatario_whatsapp || '',
           tipo: 'Locatário',
           statusOriginal: a.status || 'Ativo',
-          endereco: a.imovel_endereco || 'Não Cadastrado',
+          endereco: a.locatario_rua ? `${a.locatario_rua}${a.locatario_numero ? ', ' + a.locatario_numero : ''}${a.locatario_bairro ? ' - ' + a.locatario_bairro : ''}` : (a.imovel_endereco || 'Não Cadastrado'),
           statusDetalhado: a.status === 'Em Atraso' ? 'Aluguel Atrasado' : 'Aluguel Em Dia',
           valor_aluguel: a.valor_aluguel || null,
           dia_vencimento: a.dia_vencimento || null,
